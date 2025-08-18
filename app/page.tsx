@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { FaTrophy, FaWallet, FaMedal, FaGamepad } from "react-icons/fa";
 import ConnectButton from "./Components/WalletConnectButton";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
@@ -94,22 +96,24 @@ const RowSkeleton: React.FC = () => (
 
 export default function Page() {
   const { address } = useAccount();
-  const router = useRouter();
-
+  const searchParams = useSearchParams();
   const iconRefs = useRef<Array<HTMLSpanElement | null>>([]);
+
   const [leaderboard, setLeaderboard] = useState<Array<{ wallet: string; score: number }>>([]);
   const [loadingBoard, setLoadingBoard] = useState<boolean>(false);
 
-  // Restore original behavior: store score AND auto-redirect like the old page
- useEffect(() => {
-   if (typeof window === "undefined") return;
-   const score = new URLSearchParams(window.location.search).get("score");
-   if (score) {
-     try { localStorage.setItem("score", score); } catch {}
-   }
-   if (address && score) router.push("/DailyCheck");
-   else if (address) router.push("/Start");
- }, [address, router]);
+  useEffect(() => {
+    const score = searchParams.get("score");
+    if (score) {
+      try {
+        localStorage.setItem("score", score);
+      } catch {}
+    }
+  }, [searchParams]);
+
+  const startGameHref = address
+    ? `https://sparkling-daffodil-bd2f48.netlify.app/?address=${address}`
+    : undefined;
 
   const animateIcon = (index: number) => {
     if (iconRefs.current[index]) {
@@ -161,14 +165,37 @@ export default function Page() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <ConnectButton />
               </motion.div>
-              {/* NOTE: Removed the external "Start Game" action to avoid introducing new functionality */}
+
+              {startGameHref ? (
+                <Link
+                  href={startGameHref}
+                  target="_blank"
+                  className={cn(
+                    "inline-flex items-center justify-center h-12 px-6 rounded-2xl font-semibold",
+                    "bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 text-black",
+                    "border border-emerald-400/50",
+                    "shadow-[inset_-4px_-4px_12px_rgba(255,255,255,0.08),8px_8px_20px_rgba(16,185,129,0.55)]",
+                    "hover:scale-110 hover:shadow-[0_0_35px_rgba(16,185,129,0.6)]",
+                    "active:scale-95 transition-all duration-300"
+                  )}
+                >
+                  <FaGamepad className="mr-2 animate-pulse" /> Start Game
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="h-12 px-6 rounded-2xl font-semibold bg-zinc-800 text-zinc-400 border border-white/10 cursor-not-allowed"
+                >
+                  Start Game
+                </button>
+              )}
             </div>
           </NeuCard>
 
           <NeuCard className="p-6 md:p-8">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3">
-                Leaderboard
+                <FaTrophy className="text-yellow-400 animate-bounce" /> Leaderboard
               </h2>
               <span className="text-xs text-zinc-400">Live soon</span>
             </div>
@@ -207,13 +234,19 @@ export default function Page() {
                     >
                       <div className="flex items-center gap-4">
                         <span
-                         ref={(el: HTMLSpanElement | null): void => {
-                             iconRefs.current[i] = el;
-                              }}
-                            className="opacity-0 group-hover:opacity-100 transition-all duration-500"
-                           >
-                           {/* medals/trophies kept as UI flair */}
-                         </span>
+                          ref={(el) => (iconRefs.current[i] = el)}
+                          className="opacity-0 group-hover:opacity-100 transition-all duration-500"
+                        >
+                          {i === 0 ? (
+                            <FaTrophy className="text-yellow-400" />
+                          ) : i === 1 ? (
+                            <FaMedal className="text-gray-300" />
+                          ) : i === 2 ? (
+                            <FaMedal className="text-orange-400" />
+                          ) : (
+                            <FaWallet className="text-green-400" />
+                          )}
+                        </span>
                         <span className="font-mono text-zinc-200">{item.wallet}</span>
                       </div>
                       <span className="font-semibold text-lg text-zinc-100">{item.score}</span>
