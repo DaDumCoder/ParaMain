@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useAccount } from "wagmi";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -94,7 +94,7 @@ const RowSkeleton: React.FC = () => (
   </div>
 );
 
-export default function Page() {
+function HomeClient {
   const { address } = useAccount();
   const searchParams = useSearchParams();
   const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -292,5 +292,10 @@ export default function Page() {
         </aside>
       </main>
     </div>
+    export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <HomeClient />
+    </Suspense>
   );
 }
