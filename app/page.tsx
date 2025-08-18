@@ -94,7 +94,7 @@ const RowSkeleton: React.FC = () => (
   </div>
 );
 
-function HomeClient {
+function HomeClient() {
   const { address } = useAccount();
   const searchParams = useSearchParams();
   const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
