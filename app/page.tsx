@@ -97,7 +97,7 @@ const RowSkeleton: React.FC = () => (
 export default function Page() {
   const { address } = useAccount();
   const searchParams = useSearchParams();
-  const iconRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   const [leaderboard, setLeaderboard] = useState<Array<{ wallet: string; score: number }>>([]);
   const [loadingBoard, setLoadingBoard] = useState<boolean>(false);
@@ -233,20 +233,20 @@ export default function Page() {
                       )}
                     >
                       <div className="flex items-center gap-4">
-                        <span
-                          ref={(el: HTMLSpanElement | null) => { iconRefs.current[i] = el; }}
-                          className="opacity-0 group-hover:opacity-100 transition-all duration-500"
-                        >
-                          {i === 0 ? (
+                          <span
+                            ref={(el: HTMLSpanElement | null): void => { iconRefs.current[i] = el; }}
+                            className="opacity-0 group-hover:opacity-100 transition-all duration-500"
+                            >
+                            {i === 0 ? (
                             <FaTrophy className="text-yellow-400" />
-                          ) : i === 1 ? (
+                            ) : i === 1 ? (
                             <FaMedal className="text-gray-300" />
-                          ) : i === 2 ? (
+                            ) : i === 2 ? (
                             <FaMedal className="text-orange-400" />
-                          ) : (
-                            <FaWallet className="text-green-400" />
-                          )}
-                        </span>
+                            ) : (
+                              <FaWallet className="text-green-400" />
+                           )}
+                          </span>
                         <span className="font-mono text-zinc-200">{item.wallet}</span>
                       </div>
                       <span className="font-semibold text-lg text-zinc-100">{item.score}</span>
