@@ -292,6 +292,8 @@ function HomeClient() {
         </aside>
       </main>
     </div>
+   );
+}
     export default function Page() {
   return (
     <Suspense fallback={null}>
