@@ -234,7 +234,7 @@ export default function Page() {
                     >
                       <div className="flex items-center gap-4">
                         <span
-                          ref={(el) => (iconRefs.current[i] = el)}
+                          ref={(el: HTMLSpanElement | null) => { iconRefs.current[i] = el; }}
                           className="opacity-0 group-hover:opacity-100 transition-all duration-500"
                         >
                           {i === 0 ? (
