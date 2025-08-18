@@ -9,6 +9,15 @@ import ConnectButton from "./Components/WalletConnectButton";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "../lib/firebase"; // <- landing se correct path
+
+// wagmi tx + receipt
+import { useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+
+// ETH value calc
+import { parseEther } from "viem";
+
 // utility: cn
 const cn = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
 
