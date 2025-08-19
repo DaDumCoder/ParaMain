@@ -241,7 +241,7 @@ function HomeClient() {
   }, [searchParams]);
 
   const startGameHref = address
-    ? `https://sparkling-daffodil-bd2f48.netlify.app/?address=${address}`
+    ? `https://luxury-fudge-465d1d.netlify.app/?address=${address}`
     : undefined;
 
   const animateIcon = (index: number) => {
