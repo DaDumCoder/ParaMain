@@ -156,21 +156,45 @@ useEffect(() => {
 }, [isClaimConfirmed, claimHash, address, scores, claimUpdatePerformed]);
 
 async function handleClaim() {
-  if (!address) { alert("Please connect your wallet first!"); return; }
-  if (isClaiming || isClaimConfirming) return;
-  if (!myScore) { alert("No record found for this wallet."); return; }
+  try {
+    setClaimUpdatePerformed(true);
 
-  const remainingToClaim = Number(myScore.claim_value || 0);
-  if (remainingToClaim <= 0) { alert("Nothing to claim."); return; }
+    if (!address) {
+      alert("Connect wallet first");
+      return;
+    }
+    if (!claimable || claimable <= 0) {
+      alert("Nothing to claim");
+      return;
+    }
 
-  const Claim_contractAddress = process.env.NEXT_PUBLIC_CLAIM_CONTRACT as `0x${string}` | undefined;
-  if (!Claim_contractAddress) { alert("Missing NEXT_PUBLIC_CLAIM_CONTRACT"); return; }
+    setIsClaiming(true);
 
-  const pricePerToken = Number(process.env.NEXT_PUBLIC_PRICE_PER_TOKEN || "0");
-  if (!pricePerToken || pricePerToken <= 0) {
-    alert("NEXT_PUBLIC_PRICE_PER_TOKEN is 0 or missing.");
-    return;
+    const valueEth = claimableToEth(claimable);           // e.g. 135 -> "0.00135"
+    const value = parseEther(valueEth.toString());        // bigint
+
+    // ✅ No preflight balance check — send tx exactly like old page
+    console.log("Initiating claim transaction with values:", {
+      to: Claim_contractAddress,
+      value: valueEth,
+      addr: address,
+    });
+
+    const hash = await sendTransactionAsync({
+      to: Claim_contractAddress,
+      value,                                             // bigint
+    });
+
+    console.log("Claim tx sent:", hash);
+    setClaimHash(hash);
+  } catch (err: any) {
+    console.error("Claim failed", err);
+    alert(err?.shortMessage || err?.message || "Claim failed");
+  } finally {
+    setIsClaiming(false);
   }
+}
+
 
   // float-safe: 18 decimals string, then parse
   const valueEth = (remainingToClaim * pricePerToken).toFixed(18);
@@ -179,13 +203,6 @@ async function handleClaim() {
     value = parseEther(valueEth);
   } catch {
     alert("Invalid claim value. Please contact support.");
-    return;
-  }
-
-  // preflight balance check (value only; gas alag se lagega)
-const have: bigint = balance?.value ?? BigInt(0);
-  if (have < value) {
-    alert(`Insufficient funds.\nNeed at least ${valueEth} ETH for value (+ gas). You have ${formatEther(have)} ETH.`);
     return;
   }
 
