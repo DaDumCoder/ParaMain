@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useAccount, useBalance, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useBalance, useWriteContract } from "wagmi";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FaTrophy, FaWallet, FaMedal, FaGamepad } from "react-icons/fa";
@@ -15,6 +15,20 @@ import { db } from "../lib/firebase";
 
 // viem utils
 import { parseEther } from "viem";
+
+// --- Claim contract config (same as old page) ---
+const CLAIM_CONTRACT = process.env.NEXT_PUBLIC_CLAIM_CONTRACT as `0x${string}`;
+
+// minimal ABI: claim(uint256 amount)
+const claimAbi = [
+  {
+    type: "function",
+    name: "claim",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: []
+  }
+] as const;
 
 /* ----------------------------- UI helpers ----------------------------- */
 const cn = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
@@ -152,29 +166,43 @@ function HomeClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClaimConfirmed]);
 
-  // old-page style: directly send tx (no preflight balance check)
-  const handleClaim = async () => {
-    if (!address) return alert("Connect wallet first.");
-    if (!myRow || !claimable || claimable <= 0) return alert("Nothing to claim.");
+// Claim via contract method (no value, only gas)
+const { writeContractAsync } = useWriteContract();
 
-    try {
-      setIsClaiming(true);
-
-      const valueEth = claimableToEth(claimable);   // e.g. 135 -> "0.00135"
-      const value = parseEther(valueEth);           // bigint
-
-      console.log("Initiating claim transaction with:", { to: CLAIM_CONTRACT, value: valueEth, from: address });
-      const hash = await sendTransactionAsync({ to: CLAIM_CONTRACT, value });
-
-      setPendingHash(hash);
-      console.log("Claim transaction hash:", hash);
-    } catch (err: any) {
-      console.error("Claim failed:", err);
-      const msg = err?.shortMessage || err?.message || "Claim failed";
-      alert(msg);
-      setIsClaiming(false);
+const handleClaim = async () => {
+  try {
+    if (!address) {
+      alert("Connect your wallet first.");
+      return;
     }
-  };
+
+    const amount = remainingToClaim; // you already compute this on the page
+    if (!amount || amount <= 0) {
+      alert("Nothing to claim.");
+      return;
+    }
+
+    setIsClaiming(true);
+
+    // Write to the contract exactly like the old flow
+    const hash = await writeContractAsync({
+      address: CLAIM_CONTRACT,
+      abi: claimAbi,
+      functionName: "claim", // change to "claimTokens" if that's what your old page used
+      args: [BigInt(amount)],
+      // value: 0n  // claim is free; only gas required
+    });
+
+    console.log("Claim tx sent:", hash);
+    setClaimHash(hash); // you already use useWaitForTransactionReceipt({ hash: claimHash })
+  } catch (err: any) {
+    console.error("Claim failed:", err);
+    alert(err?.shortMessage || err?.message || "Claim failed.");
+  } finally {
+    setIsClaiming(false);
+  }
+};
+
 
   // pick score from URL once (game returns ?score=...)
   useEffect(() => {
