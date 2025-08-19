@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useAccount, useWaitForTransactionReceipt, useBalance, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useWaitForTransactionReceipt,
+  useBalance,
+  useWriteContract,
+} from "wagmi";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FaTrophy, FaWallet, FaMedal, FaGamepad } from "react-icons/fa";
@@ -13,11 +18,11 @@ import ConnectButton from "./Components/WalletConnectButton";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
-// viem utils
-import { parseEther } from "viem";
-
 // --- Claim contract config (same as old page) ---
-const CLAIM_CONTRACT = process.env.NEXT_PUBLIC_CLAIM_CONTRACT as `0x${string}`;
+const CLAIM_CONTRACT = (
+  process.env.NEXT_PUBLIC_CLAIM_CONTRACT ||
+  "0x5D1e186A8f7D26771d6791E6B232DD4A2Ad7d72d"
+) as `0x${string}`;
 
 // minimal ABI: claim(uint256 amount)
 const claimAbi = [
@@ -26,20 +31,22 @@ const claimAbi = [
     name: "claim",
     stateMutability: "nonpayable",
     inputs: [{ name: "amount", type: "uint256" }],
-    outputs: []
-  }
+    outputs: [],
+  },
 ] as const;
 
 /* ----------------------------- UI helpers ----------------------------- */
-const cn = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
+const cn = (...classes: (string | false | undefined)[]) =>
+  classes.filter(Boolean).join(" ");
 const SOFT = {
   card:
     "rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 backdrop-blur-xl shadow-[inset_-6px_-6px_16px_rgba(255,255,255,0.05),inset_6px_6px_16px_rgba(0,0,0,0.7),12px_12px_24px_rgba(0,0,0,0.8)]",
   hover: "transition-all duration-300 hover:scale-[1.01]",
 };
-const NeuCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = "" }) => (
-  <div className={cn(SOFT.card, SOFT.hover, className)}>{children}</div>
-);
+const NeuCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({
+  children,
+  className = "",
+}) => <div className={cn(SOFT.card, SOFT.hover, className)}>{children}</div>;
 
 /* ------------------------------ Brand/UI ------------------------------ */
 const BrandKazar: React.FC = () => {
@@ -60,7 +67,10 @@ const BrandKazar: React.FC = () => {
           <motion.span
             key={i}
             className="inline-block"
-            variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }}
+            variants={{
+              hidden: { y: 20, opacity: 0 },
+              show: { y: 0, opacity: 1 },
+            }}
             whileHover={{ y: -2, scale: 1.08 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
@@ -68,7 +78,11 @@ const BrandKazar: React.FC = () => {
           </motion.span>
         ))}
         <span className="relative ml-3 align-middle text-[10px] sm:text-xs font-semibold text-white/70">
-          <motion.span className="inline-block" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.span
+            className="inline-block"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          >
             super dApp
           </motion.span>
         </span>
@@ -103,57 +117,76 @@ const RowSkeleton: React.FC = () => (
   </div>
 );
 
-/* ----------------------------- Claim config --------------------------- */
-/** NOTE: yahi address old page me use hota tha. If tumhare repo me Config se aata hai,
- *  to neeche wali line ko replace karke import use kar lo:
- *  import { CLAIM_CONTRACT } from "./Config";
- */
-const PRICE_PER_POINT = 0.00001; // 135 pts -> 0.00135 ETH
-
+/* ----------------------------- Claim helpers -------------------------- */
+const PRICE_PER_POINT = 0.00001;
 const claimableToEth = (pts: number) => (pts * PRICE_PER_POINT).toFixed(18);
 
 /* ===================================================================== */
 
 function HomeClient() {
   const { address } = useAccount();
-  useBalance({ address }); // (optional) keeps wallet box fresh
+  useBalance({ address }); // optional: keeps wallet box fresh
   const searchParams = useSearchParams();
   const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
-  const [leaderboard, setLeaderboard] = useState<Array<{ wallet: string; score: number }>>([]);
+  const [leaderboard, setLeaderboard] = useState<
+    Array<{ wallet: string; score: number }>
+  >([]);
   const [loadingBoard, setLoadingBoard] = useState(false);
 
   // --- scores for claim ---
-  const [scores, setScores] = useState<Array<{ id: string; wallet: string; claim_value?: number; claim_done?: boolean }>>([]);
+  const [scores, setScores] = useState<
+    Array<{
+      id: string;
+      wallet: string;
+      claim_value?: number;
+      claim_done?: boolean;
+    }>
+  >([]);
+
   const loadScores = async () => {
     try {
       const snap = await getDocs(collection(db, "scores"));
-      setScores(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
+      setScores(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
     } catch (e) {
       console.error("loadScores failed", e);
     }
   };
-  useEffect(() => { loadScores(); }, []);
+  useEffect(() => {
+    loadScores();
+  }, []);
 
   // user row
-  const myRow = useMemo(() => scores.find(s => s.wallet?.toLowerCase() === address?.toLowerCase()), [scores, address]);
+  const myRow = useMemo(
+    () => scores.find((s) => s.wallet?.toLowerCase() === address?.toLowerCase()),
+    [scores, address]
+  );
   const claimable = myRow?.claim_value ?? 0;
 
-  // tx hooks
-  const { sendTransactionAsync } = useSendTransaction();
-  const [pendingHash, setPendingHash] = useState<`0x${string}` | undefined>(undefined);
-  const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } = useWaitForTransactionReceipt({ hash: pendingHash });
+  // tx hooks (write -> wait receipt)
+  const { writeContractAsync } = useWriteContract();
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } =
+    useWaitForTransactionReceipt({ hash: txHash });
 
   const [isClaiming, setIsClaiming] = useState(false);
-  const claimButtonDisabled = !address || !myRow || claimable <= 0 || isClaiming || isClaimConfirming;
+  const claimButtonDisabled =
+    !address || !myRow || claimable <= 0 || isClaiming || isClaimConfirming;
 
-  // receipt -> mark claimed
+  // receipt -> mark claimed in Firestore
   useEffect(() => {
     (async () => {
       if (!isClaimConfirmed || !address || !myRow) return;
       try {
-        await updateDoc(doc(db, "scores", myRow.id), { claim_done: true, claim_value: 0 });
-        setScores(prev => prev.map(r => (r.id === myRow.id ? { ...r, claim_done: true, claim_value: 0 } : r)));
+        await updateDoc(doc(db, "scores", myRow.id), {
+          claim_done: true,
+          claim_value: 0,
+        });
+        setScores((prev) =>
+          prev.map((r) =>
+            r.id === myRow.id ? { ...r, claim_done: true, claim_value: 0 } : r
+          )
+        );
         setIsClaiming(false);
         alert("Reward claimed successfully!");
       } catch (e) {
@@ -165,49 +198,45 @@ function HomeClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClaimConfirmed]);
 
-// Claim via contract method (no value, only gas)
-const { writeContractAsync } = useWriteContract();
+  // Claim via contract method (no value, only gas)
+  const handleClaim = async () => {
+    try {
+      if (!address) {
+        alert("Connect your wallet first.");
+        return;
+      }
 
-const handleClaim = async () => {
-  try {
-    if (!address) {
-      alert("Connect your wallet first.");
-      return;
+      const amount = Math.floor(Number(claimable) || 0); // old flow: contract expects uint
+      if (!amount || amount <= 0) {
+        alert("Nothing to claim.");
+        return;
+      }
+
+      setIsClaiming(true);
+
+      const hash = await writeContractAsync({
+        address: CLAIM_CONTRACT,
+        abi: claimAbi,
+        functionName: "claim", // change here if your contract uses a different method name
+        args: [BigInt(amount)],
+      });
+
+      console.log("Claim tx sent:", hash);
+      setTxHash(hash);
+    } catch (err: any) {
+      console.error("Claim failed:", err);
+      alert(err?.shortMessage || err?.message || "Claim failed.");
+      setIsClaiming(false);
     }
-
-    const amount = remainingToClaim; // you already compute this on the page
-    if (!amount || amount <= 0) {
-      alert("Nothing to claim.");
-      return;
-    }
-
-    setIsClaiming(true);
-
-    // Write to the contract exactly like the old flow
-    const hash = await writeContractAsync({
-      address: CLAIM_CONTRACT,
-      abi: claimAbi,
-      functionName: "claim", // change to "claimTokens" if that's what your old page used
-      args: [BigInt(amount)],
-      // value: 0n  // claim is free; only gas required
-    });
-
-    console.log("Claim tx sent:", hash);
-    setClaimHash(hash); // you already use useWaitForTransactionReceipt({ hash: claimHash })
-  } catch (err: any) {
-    console.error("Claim failed:", err);
-    alert(err?.shortMessage || err?.message || "Claim failed.");
-  } finally {
-    setIsClaiming(false);
-  }
-};
-
+  };
 
   // pick score from URL once (game returns ?score=...)
   useEffect(() => {
     const s = searchParams.get("score");
     if (s) {
-      try { localStorage.setItem("score", s); } catch {}
+      try {
+        localStorage.setItem("score", s);
+      } catch {}
     }
   }, [searchParams]);
 
@@ -218,7 +247,11 @@ const handleClaim = async () => {
   const animateIcon = (index: number) => {
     const el = iconRefs.current[index];
     if (!el) return;
-    gsap.fromTo(el, { y: 0, opacity: 1, scale: 1 }, { y: -30, scale: 1.6, opacity: 0, duration: 0.6, ease: "power3.out" });
+    gsap.fromTo(
+      el,
+      { y: 0, opacity: 1, scale: 1 },
+      { y: -30, scale: 1.6, opacity: 0, duration: 0.6, ease: "power3.out" }
+    );
   };
 
   return (
@@ -235,16 +268,26 @@ const handleClaim = async () => {
         {/* Left */}
         <section className="col-span-12 lg:col-span-8 space-y-8">
           <NeuCard className="p-6 md:p-10 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
-            <motion.h1 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <motion.h1
+              className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               All-in-one Super dApp
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400">on Camp Network</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400">
+                on Camp Network
+              </span>
             </motion.h1>
 
             <div className="mt-6">
               <NeuCard className="p-5 md:p-6 bg-zinc-900/70">
                 <div className="text-xl md:text-2xl font-semibold text-zinc-50">
                   <p className="mb-2">Hello 👋</p>
-                  <p className="text-sm md:text-base text-zinc-400">Collect and claim prizes & badges by playing games and completing quests.</p>
+                  <p className="text-sm md:text-base text-zinc-400">
+                    Collect and claim prizes & badges by playing games and
+                    completing quests.
+                  </p>
                 </div>
               </NeuCard>
             </div>
@@ -270,7 +313,10 @@ const handleClaim = async () => {
                   <FaGamepad className="mr-2 animate-pulse" /> Start Game
                 </Link>
               ) : (
-                <button disabled className="h-12 px-6 rounded-2xl font-semibold bg-zinc-800 text-zinc-400 border border-white/10 cursor-not-allowed">
+                <button
+                  disabled
+                  className="h-12 px-6 rounded-2xl font-semibold bg-zinc-800 text-zinc-400 border border-white/10 cursor-not-allowed"
+                >
                   Start Game
                 </button>
               )}
@@ -280,17 +326,29 @@ const handleClaim = async () => {
           <NeuCard className="p-6 md:p-8">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3">
-                <FaTrophy className="text-yellow-400 animate-bounce" /> Leaderboard
+                <FaTrophy className="text-yellow-400 animate-bounce" />{" "}
+                Leaderboard
               </h2>
               <span className="text-xs text-zinc-400">Live soon</span>
             </div>
 
             <AnimatePresence mode="popLayout">
               {loadingBoard ? (
-                <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <RowSkeleton key={i} />)}</div>
+                <div className="space-y-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <RowSkeleton key={i} />
+                  ))}
+                </div>
               ) : leaderboard.length === 0 ? (
-                <motion.div key="empty" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="p-6 rounded-2xl bg-zinc-900/60 border border-white/10 text-sm text-zinc-400">
-                  No entries yet. Connect your wallet and start playing—scores will appear here.
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="p-6 rounded-2xl bg-zinc-900/60 border border-white/10 text-sm text-zinc-400"
+                >
+                  No entries yet. Connect your wallet and start playing—scores
+                  will appear here.
                 </motion.div>
               ) : (
                 <div className="space-y-4">
@@ -308,12 +366,29 @@ const handleClaim = async () => {
                       )}
                     >
                       <div className="flex items-center gap-4">
-                        <span ref={(el: HTMLSpanElement | null) => { iconRefs.current[i] = el; }} className="opacity-0 group-hover:opacity-100 transition-all duration-500">
-                          {i === 0 ? <FaTrophy className="text-yellow-400" /> : i === 1 ? <FaMedal className="text-gray-300" /> : i === 2 ? <FaMedal className="text-orange-400" /> : <FaWallet className="text-green-400" />}
+                        <span
+                          ref={(el: HTMLSpanElement | null) => {
+                            iconRefs.current[i] = el;
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-all duration-500"
+                        >
+                          {i === 0 ? (
+                            <FaTrophy className="text-yellow-400" />
+                          ) : i === 1 ? (
+                            <FaMedal className="text-gray-300" />
+                          ) : i === 2 ? (
+                            <FaMedal className="text-orange-400" />
+                          ) : (
+                            <FaWallet className="text-green-400" />
+                          )}
                         </span>
-                        <span className="font-mono text-zinc-200">{item.wallet}</span>
+                        <span className="font-mono text-zinc-200">
+                          {item.wallet}
+                        </span>
                       </div>
-                      <span className="font-semibold text-lg text-zinc-100">{item.score}</span>
+                      <span className="font-semibold text-lg text-zinc-100">
+                        {item.score}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -330,21 +405,28 @@ const handleClaim = async () => {
               <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3">
                 <FaWallet className="text-green-400" /> Claim
               </h2>
-              <button onClick={loadScores} className="text-xs px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
+              <button
+                onClick={loadScores}
+                className="text-xs px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
+              >
                 Refresh
               </button>
             </div>
 
             <div className="space-y-4">
               {!address ? (
-                <p className="text-zinc-400">Connect wallet to see claimable amount.</p>
+                <p className="text-zinc-400">
+                  Connect wallet to see claimable amount.
+                </p>
               ) : myRow ? (
                 <div className="flex items-center justify-between">
                   <span className="text-zinc-400">Claimable</span>
                   <span className="font-mono text-white">{claimable}</span>
                 </div>
               ) : (
-                <p className="text-zinc-400">No record found for this wallet.</p>
+                <p className="text-zinc-400">
+                  No record found for this wallet.
+                </p>
               )}
 
               <button
@@ -357,29 +439,15 @@ const handleClaim = async () => {
             </div>
           </NeuCard>
 
-          <NeuCard className="p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Status</h2>
-              <span className="text-xs text-zinc-500"></span>
-            </div>
-            <div className="mt-6 text-sm text-zinc-300 space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-white/10">
-                <span>Wallet</span>
-                <span className="font-mono">{address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Not connected"}</span>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <span>Score</span>
-                <span className="font-mono">{typeof window !== "undefined" ? localStorage.getItem("score") ?? "--" : "--"}</span>
-              </div>
-            </div>
-          </NeuCard>
-
           <NeuCard className="p-6 hover:shadow-[0_0_25px_rgba(52,211,153,0.35)]">
             <div className="flex items-center gap-3 mb-3">
               <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <p className="text-sm text-zinc-400">Pro tip</p>
             </div>
-            <p className="text-sm text-zinc-300">Connect your wallet to unlock quests, claim rewards, and appear on the leaderboard.</p>
+            <p className="text-sm text-zinc-300">
+              Connect your wallet to unlock quests, claim rewards, and appear on
+              the leaderboard.
+            </p>
           </NeuCard>
         </aside>
       </main>
