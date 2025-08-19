@@ -183,7 +183,7 @@ async function handleClaim() {
   }
 
   // preflight balance check (value only; gas alag se lagega)
-  const have = balance?.value ?? 0n;
+const have: bigint = balance?.value ?? BigInt(0);
   if (have < value) {
     alert(`Insufficient funds.\nNeed at least ${valueEth} ETH for value (+ gas). You have ${formatEther(have)} ETH.`);
     return;
