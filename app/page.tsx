@@ -345,6 +345,42 @@ async function handleClaim() {
         </section>
 
         <aside className="col-span-12 lg:col-span-4 space-y-8">
+          {/* Claim (landing) */}
+<NeuCard className="p-6 md:p-8">
+  <div className="flex items-center justify-between mb-4 md:mb-6">
+    <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3">
+      <FaWallet className="text-green-400" /> Claim
+    </h2>
+    <button
+      onClick={loadScores}
+      className="text-xs px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
+    >
+      Refresh
+    </button>
+  </div>
+
+  <div className="space-y-4">
+    {!address ? (
+      <p className="text-zinc-400">Connect wallet to see claimable amount.</p>
+    ) : myScore ? (
+      <div className="flex items-center justify-between">
+        <span className="text-zinc-400">Claimable</span>
+        <span className="font-mono text-white">{claimable}</span>
+      </div>
+    ) : (
+      <p className="text-zinc-400">No record found for this wallet.</p>
+    )}
+
+    <button
+      onClick={handleClaim}
+      disabled={claimButtonDisabled}
+      className="w-full cursor-pointer text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl shadow-[inset_0_2px_0_rgba(255,255,255,.12)] hover:scale-[1.01] active:scale-[.99] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+    >
+      {isClaiming || isClaimConfirming ? "Claiming..." : "Claim Now"}
+    </button>
+  </div>
+</NeuCard>
+
           <NeuCard className="p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Status</h2>
