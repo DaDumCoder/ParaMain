@@ -111,68 +111,6 @@ function HomeClient() {
   const [leaderboard, setLeaderboard] = useState<Array<{ wallet: string; score: number }>>([]);
   const [loadingBoard, setLoadingBoard] = useState<boolean>(false);
 
-  // STEP 2: claim state + logic
-const [claimAmount, setClaimAmount] = useState<number | null>(null);
-const [claimLoading, setClaimLoading] = useState(false);
-const [claimError, setClaimError] = useState<string | null>(null);
-const [claimSuccess, setClaimSuccess] = useState<string | null>(null);
-
-// wagmi tx + receipt (already imported)
-const { data: txHash, sendTransaction } = useSendTransaction();
-const { isLoading: isPending, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
-
-// claimable amount lao (Firestore "scores" se wallet match karke)
-const fetchClaim = async () => {
-  if (!address) { setClaimError("Connect wallet first"); return; }
-  try {
-    setClaimLoading(true);
-    setClaimError(null);
-
-    const snap = await getDocs(collection(db, "scores"));
-    const me = snap.docs.find(
-      d => (d.data().wallet as string)?.toLowerCase() === address.toLowerCase()
-    );
-    const myScore = Number(me?.data().score ?? 0);
-
-    setClaimAmount(myScore); // yahan apna formula laga sakte ho
-  } catch (e: any) {
-    setClaimError(e.message ?? "Failed to fetch claim");
-  } finally {
-    setClaimLoading(false);
-  }
-};
-
-// claim tx bhejo (placeholder — baad me real contract call lagayenge)
-const handleClaim = async () => {
-  if (!address) { setClaimError("Connect wallet first"); return; }
-  if (!claimAmount || claimAmount <= 0) { setClaimError("Nothing to claim"); return; }
-  try {
-    // abhi ke liye 0 ETH self ko (sirf flow test)
-    sendTransaction?.({ to: address, value: parseEther("0") });
-  } catch (e: any) {
-    setClaimError(e.message ?? "Claim failed");
-  }
-};
-
-// tx confirm hone par Firestore me score reset karo
-useEffect(() => {
-  if (!isConfirmed || !address) return;
-  (async () => {
-    try {
-      const snap = await getDocs(collection(db, "scores"));
-      const me = snap.docs.find(
-        d => (d.data().wallet as string)?.toLowerCase() === address.toLowerCase()
-      );
-      if (me) {
-        await updateDoc(doc(db, "scores", me.id), { score: 0 });
-        setClaimSuccess("Claimed!");
-        setClaimAmount(0);
-      }
-    } catch {}
-  })();
-}, [isConfirmed, address]);
-
-
   // ---- Claim state ----
 const [scores, setScores] = useState<Array<{ id: string; [k: string]: any }>>([]);
 const [isClaiming, setIsClaiming] = useState(false);
