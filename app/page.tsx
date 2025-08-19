@@ -108,7 +108,6 @@ const RowSkeleton: React.FC = () => (
  *  to neeche wali line ko replace karke import use kar lo:
  *  import { CLAIM_CONTRACT } from "./Config";
  */
-const CLAIM_CONTRACT = "0x5D1e186A8f7D26771d6791E6B232DD4A2Ad7d72d" as `0x${string}`; // <- tumhara claim receiver
 const PRICE_PER_POINT = 0.00001; // 135 pts -> 0.00135 ETH
 
 const claimableToEth = (pts: number) => (pts * PRICE_PER_POINT).toFixed(18);
