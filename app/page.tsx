@@ -13,10 +13,10 @@ import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase"; // <- landing se correct path
 
 // wagmi tx + receipt
-import { useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { useSendTransaction, useWaitForTransactionReceipt, useBalance } from "wagmi";
 
 // ETH value calc
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
 
 // utility: cn
 const cn = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
@@ -105,6 +105,7 @@ const RowSkeleton: React.FC = () => (
 
 function HomeClient() {
   const { address } = useAccount();
+  const { data: balance } = useBalance({ address });
   const searchParams = useSearchParams();
   const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
@@ -154,49 +155,58 @@ useEffect(() => {
   })();
 }, [isClaimConfirmed, claimHash, address, scores, claimUpdatePerformed]);
 
-// Claim button handler
 async function handleClaim() {
   if (!address) { alert("Please connect your wallet first!"); return; }
   if (isClaiming || isClaimConfirming) return;
   if (!myScore) { alert("No record found for this wallet."); return; }
 
-  const remainingToClaim = myScore.claim_value || 0;
+  const remainingToClaim = Number(myScore.claim_value || 0);
   if (remainingToClaim <= 0) { alert("Nothing to claim."); return; }
 
-  const Claim_contractAddress =
-    process.env.NEXT_PUBLIC_CLAIM_CONTRACT as `0x${string}` | undefined;
+  const Claim_contractAddress = process.env.NEXT_PUBLIC_CLAIM_CONTRACT as `0x${string}` | undefined;
   if (!Claim_contractAddress) { alert("Missing NEXT_PUBLIC_CLAIM_CONTRACT"); return; }
 
-  const pricePerTokenWei = BigInt(process.env.NEXT_PUBLIC_PRICE_PER_TOKEN || "0");
-  const valueWei = pricePerTokenWei * BigInt(remainingToClaim);
+  const pricePerToken = Number(process.env.NEXT_PUBLIC_PRICE_PER_TOKEN || "0");
+  if (!pricePerToken || pricePerToken <= 0) {
+    alert("NEXT_PUBLIC_PRICE_PER_TOKEN is 0 or missing.");
+    return;
+  }
 
+  // float-safe: 18 decimals string, then parse
+  const valueEth = (remainingToClaim * pricePerToken).toFixed(18);
+  let value: bigint;
   try {
-    console.log("Initiating claim transaction with values:", {
-      Claim_contractAddress,
-      remainingToClaim,
-      valueWei: valueWei.toString(),
-    });
+    value = parseEther(valueEth);
+  } catch {
+    alert("Invalid claim value. Please contact support.");
+    return;
+  }
 
-    const hash = await sendTransactionAsync({
-      to: Claim_contractAddress,
-      value: valueWei,
-      data: `0x${new Array(64).fill("0").join("")}`,
-    });
+  // preflight balance check (value only; gas alag se lagega)
+  const have = balance?.value ?? 0n;
+  if (have < value) {
+    alert(`Insufficient funds.\nNeed at least ${valueEth} ETH for value (+ gas). You have ${formatEther(have)} ETH.`);
+    return;
+  }
 
-    console.log("Claim transaction initiated, amount to claim:", remainingToClaim);
-    setClaimHash(hash);
+  setClaimUpdatePerformed(false);
+  setIsClaiming(true);
+  try {
+    await sendTransactionAsync({ to: Claim_contractAddress, value });
+    // Receipt ke baad Firestore update tumhare effect me already hai
   } catch (err: any) {
-    console.error(err);
-    const msg = (err?.message || "").toLowerCase();
-    if (msg.includes("user rejected") || msg.includes("user denied")) {
+    setIsClaiming(false);
+    const msg = typeof err?.message === "string" ? err.message : String(err);
+    if (msg.includes("user rejected") || msg.includes("User denied")) {
       alert("Transaction was cancelled by user.");
-    } else if (msg === "request timeout") {
+    } else if (msg === "Request timeout") {
       alert("Request timed out. Please try again.");
     } else {
-      alert("Error initiating claim. Please try again.");
+      alert(msg || "Error initiating claim. Please try again.");
     }
   }
 }
+
 
 
   useEffect(() => {
