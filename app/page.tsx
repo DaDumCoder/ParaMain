@@ -1,37 +1,33 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FaTrophy, FaWallet, FaMedal, FaGamepad } from "react-icons/fa";
-import ConnectButton from "./Components/WalletConnectButton";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
+import ConnectButton from "./Components/WalletConnectButton";
 
+// Firestore
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase"; // <- landing se correct path
+import { db } from "../lib/firebase";
 
-// wagmi tx + receipt
-import { useSendTransaction, useWaitForTransactionReceipt, useBalance } from "wagmi";
+// viem utils
+import { parseEther } from "viem";
 
-// ETH value calc
-import { parseEther, formatEther } from "viem";
-
-// utility: cn
+/* ----------------------------- UI helpers ----------------------------- */
 const cn = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
-
-// soft-ui tokens
 const SOFT = {
   card:
     "rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 backdrop-blur-xl shadow-[inset_-6px_-6px_16px_rgba(255,255,255,0.05),inset_6px_6px_16px_rgba(0,0,0,0.7),12px_12px_24px_rgba(0,0,0,0.8)]",
   hover: "transition-all duration-300 hover:scale-[1.01]",
 };
-
 const NeuCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = "" }) => (
   <div className={cn(SOFT.card, SOFT.hover, className)}>{children}</div>
 );
 
+/* ------------------------------ Brand/UI ------------------------------ */
 const BrandKazar: React.FC = () => {
   const letters = useMemo(() => ["K", "A", "Z", "A", "R"], []);
   return (
@@ -50,10 +46,7 @@ const BrandKazar: React.FC = () => {
           <motion.span
             key={i}
             className="inline-block"
-            variants={{
-              hidden: { y: 20, opacity: 0 },
-              show: { y: 0, opacity: 1 },
-            }}
+            variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }}
             whileHover={{ y: -2, scale: 1.08 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
@@ -61,11 +54,7 @@ const BrandKazar: React.FC = () => {
           </motion.span>
         ))}
         <span className="relative ml-3 align-middle text-[10px] sm:text-xs font-semibold text-white/70">
-          <motion.span
-            className="inline-block"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-          >
+          <motion.span className="inline-block" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}>
             super dApp
           </motion.span>
         </span>
@@ -74,24 +63,21 @@ const BrandKazar: React.FC = () => {
   );
 };
 
-// navbar
-const Navbar: React.FC = () => {
-  return (
-    <div className="sticky top-0 z-40">
-      <div className="h-16 w-full bg-gradient-to-r from-fuchsia-800/50 via-rose-800/50 to-indigo-800/50 backdrop-blur-xl border-b border-white/10 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all duration-500" />
-      <div className="px-4 md:px-6">
-        <div className="-mt-10 flex items-center justify-between">
-          <BrandKazar />
-          <div className="flex items-center gap-2 sm:gap-3">
-            <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}>
-              <ConnectButton />
-            </motion.div>
-          </div>
+const Navbar: React.FC = () => (
+  <div className="sticky top-0 z-40">
+    <div className="h-16 w-full bg-gradient-to-r from-fuchsia-800/50 via-rose-800/50 to-indigo-800/50 backdrop-blur-xl border-b border-white/10 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all duration-500" />
+    <div className="px-4 md:px-6">
+      <div className="-mt-10 flex items-center justify-between">
+        <BrandKazar />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}>
+            <ConnectButton />
+          </motion.div>
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const RowSkeleton: React.FC = () => (
   <div className="flex justify-between items-center p-4 rounded-2xl bg-zinc-900/70 border border-white/10 animate-pulse">
@@ -103,135 +89,98 @@ const RowSkeleton: React.FC = () => (
   </div>
 );
 
+/* ----------------------------- Claim config --------------------------- */
+/** NOTE: yahi address old page me use hota tha. If tumhare repo me Config se aata hai,
+ *  to neeche wali line ko replace karke import use kar lo:
+ *  import { CLAIM_CONTRACT } from "./Config";
+ */
+const CLAIM_CONTRACT = "0x5D1e186A8f7D26771d6791E6B232DD4A2Ad7d72d" as `0x${string}`; // <- tumhara claim receiver
+const PRICE_PER_POINT = 0.00001; // 135 pts -> 0.00135 ETH
+
+const claimableToEth = (pts: number) => (pts * PRICE_PER_POINT).toFixed(18);
+
+/* ===================================================================== */
+
 function HomeClient() {
   const { address } = useAccount();
-  const { data: balance } = useBalance({ address });
+  useBalance({ address }); // (optional) keeps wallet box fresh
   const searchParams = useSearchParams();
   const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   const [leaderboard, setLeaderboard] = useState<Array<{ wallet: string; score: number }>>([]);
-  const [loadingBoard, setLoadingBoard] = useState<boolean>(false);
+  const [loadingBoard, setLoadingBoard] = useState(false);
 
-  // ---- Claim state ----
-const [scores, setScores] = useState<Array<{ id: string; [k: string]: any }>>([]);
-const [isClaiming, setIsClaiming] = useState(false);
-const [claimUpdatePerformed, setClaimUpdatePerformed] = useState(false);
+  // --- scores for claim ---
+  const [scores, setScores] = useState<Array<{ id: string; wallet: string; claim_value?: number; claim_done?: boolean }>>([]);
+  const loadScores = async () => {
+    try {
+      const snap = await getDocs(collection(db, "scores"));
+      setScores(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
+    } catch (e) {
+      console.error("loadScores failed", e);
+    }
+  };
+  useEffect(() => { loadScores(); }, []);
 
-// Firestore se scores load/refresh
-const loadScores = async () => {
-  const snap = await getDocs(collection(db, "scores"));
-  setScores(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-};
-useEffect(() => { loadScores(); }, []);
+  // user row
+  const myRow = useMemo(() => scores.find(s => s.wallet?.toLowerCase() === address?.toLowerCase()), [scores, address]);
+  const claimable = myRow?.claim_value ?? 0;
 
-// wagmi tx + receipt
-const { data: claimHash, sendTransactionAsync } = useSendTransaction();
-const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } =
-  useWaitForTransactionReceipt({ hash: claimHash });
+  // tx hooks
+  const { sendTransactionAsync } = useSendTransaction();
+  const [pendingHash, setPendingHash] = useState<`0x${string}` | undefined>(undefined);
+  const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } = useWaitForTransactionReceipt({ hash: pendingHash });
 
-// Current user score & helpers
-const myScore = useMemo(() => scores.find(s => s.wallet === address), [scores, address]);
-const claimable = myScore?.claim_value ?? 0;
-const claimButtonDisabled = !address || isClaiming || isClaimConfirming || !myScore || claimable <= 0;
+  const [isClaiming, setIsClaiming] = useState(false);
+  const claimButtonDisabled = !address || !myRow || claimable <= 0 || isClaiming || isClaimConfirming;
 
-// Tx confirm hone par Firestore update
-useEffect(() => {
-  (async () => {
-    if (!isClaimConfirmed || claimUpdatePerformed || !address) return;
-    const userScoreObj = scores.find(s => s.wallet === address);
-    if (!userScoreObj) return;
+  // receipt -> mark claimed
+  useEffect(() => {
+    (async () => {
+      if (!isClaimConfirmed || !address || !myRow) return;
+      try {
+        await updateDoc(doc(db, "scores", myRow.id), { claim_done: true, claim_value: 0 });
+        setScores(prev => prev.map(r => (r.id === myRow.id ? { ...r, claim_done: true, claim_value: 0 } : r)));
+        setIsClaiming(false);
+        alert("Reward claimed successfully!");
+      } catch (e) {
+        console.error("update after claim failed", e);
+        setIsClaiming(false);
+        alert("Error updating claim status. Please contact support.");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClaimConfirmed]);
+
+  // old-page style: directly send tx (no preflight balance check)
+  const handleClaim = async () => {
+    if (!address) return alert("Connect wallet first.");
+    if (!myRow || !claimable || claimable <= 0) return alert("Nothing to claim.");
 
     try {
-      const ref = doc(db, "scores", userScoreObj.id);
-      await updateDoc(ref, { claim_done: true, claim_value: 0 });
-      setScores(prev => prev.map(s => s.id === userScoreObj.id ? { ...s, claim_done: true, claim_value: 0 } : s));
-      setClaimUpdatePerformed(true);
+      setIsClaiming(true);
+
+      const valueEth = claimableToEth(claimable);   // e.g. 135 -> "0.00135"
+      const value = parseEther(valueEth);           // bigint
+
+      console.log("Initiating claim transaction with:", { to: CLAIM_CONTRACT, value: valueEth, from: address });
+      const hash = await sendTransactionAsync({ to: CLAIM_CONTRACT, value });
+
+      setPendingHash(hash);
+      console.log("Claim transaction hash:", hash);
+    } catch (err: any) {
+      console.error("Claim failed:", err);
+      const msg = err?.shortMessage || err?.message || "Claim failed";
+      alert(msg);
       setIsClaiming(false);
-      alert("Reward claimed successfully!");
-    } catch (e) {
-      setIsClaiming(false);
-      alert("Error updating claim status. Please contact support.");
     }
-  })();
-}, [isClaimConfirmed, claimHash, address, scores, claimUpdatePerformed]);
+  };
 
-async function handleClaim() {
-  try {
-    setClaimUpdatePerformed(true);
-
-    if (!address) {
-      alert("Connect wallet first");
-      return;
-    }
-    if (!claimable || claimable <= 0) {
-      alert("Nothing to claim");
-      return;
-    }
-
-    setIsClaiming(true);
-
-    const valueEth = claimableToEth(claimable);           // e.g. 135 -> "0.00135"
-    const value = parseEther(valueEth.toString());        // bigint
-
-    // ✅ No preflight balance check — send tx exactly like old page
-    console.log("Initiating claim transaction with values:", {
-      to: Claim_contractAddress,
-      value: valueEth,
-      addr: address,
-    });
-
-    const hash = await sendTransactionAsync({
-      to: Claim_contractAddress,
-      value,                                             // bigint
-    });
-
-    console.log("Claim tx sent:", hash);
-    setClaimHash(hash);
-  } catch (err: any) {
-    console.error("Claim failed", err);
-    alert(err?.shortMessage || err?.message || "Claim failed");
-  } finally {
-    setIsClaiming(false);
-  }
-}
-
-
-  // float-safe: 18 decimals string, then parse
-  const valueEth = (remainingToClaim * pricePerToken).toFixed(18);
-  let value: bigint;
-  try {
-    value = parseEther(valueEth);
-  } catch {
-    alert("Invalid claim value. Please contact support.");
-    return;
-  }
-
-  setClaimUpdatePerformed(false);
-  setIsClaiming(true);
-  try {
-    await sendTransactionAsync({ to: Claim_contractAddress, value });
-    // Receipt ke baad Firestore update tumhare effect me already hai
-  } catch (err: any) {
-    setIsClaiming(false);
-    const msg = typeof err?.message === "string" ? err.message : String(err);
-    if (msg.includes("user rejected") || msg.includes("User denied")) {
-      alert("Transaction was cancelled by user.");
-    } else if (msg === "Request timeout") {
-      alert("Request timed out. Please try again.");
-    } else {
-      alert(msg || "Error initiating claim. Please try again.");
-    }
-  }
-}
-
-
-
+  // pick score from URL once (game returns ?score=...)
   useEffect(() => {
-    const score = searchParams.get("score");
-    if (score) {
-      try {
-        localStorage.setItem("score", score);
-      } catch {}
+    const s = searchParams.get("score");
+    if (s) {
+      try { localStorage.setItem("score", s); } catch {}
     }
   }, [searchParams]);
 
@@ -240,13 +189,9 @@ async function handleClaim() {
     : undefined;
 
   const animateIcon = (index: number) => {
-    if (iconRefs.current[index]) {
-      gsap.fromTo(
-        iconRefs.current[index],
-        { y: 0, opacity: 1, scale: 1 },
-        { y: -30, scale: 1.6, opacity: 0, duration: 0.6, ease: "power3.out" }
-      );
-    }
+    const el = iconRefs.current[index];
+    if (!el) return;
+    gsap.fromTo(el, { y: 0, opacity: 1, scale: 1 }, { y: -30, scale: 1.6, opacity: 0, duration: 0.6, ease: "power3.out" });
   };
 
   return (
@@ -260,27 +205,19 @@ async function handleClaim() {
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-4 md:px-6 py-12 grid grid-cols-12 gap-6 md:gap-8">
+        {/* Left */}
         <section className="col-span-12 lg:col-span-8 space-y-8">
           <NeuCard className="p-6 md:p-10 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
-            <motion.h1
-              className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <motion.h1 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               All-in-one Super dApp
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400">
-                on Camp Network
-              </span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400">on Camp Network</span>
             </motion.h1>
 
             <div className="mt-6">
               <NeuCard className="p-5 md:p-6 bg-zinc-900/70">
                 <div className="text-xl md:text-2xl font-semibold text-zinc-50">
                   <p className="mb-2">Hello 👋</p>
-                  <p className="text-sm md:text-base text-zinc-400">
-                    Collect and claim prizes & badges by playing games and completing quests.
-                  </p>
+                  <p className="text-sm md:text-base text-zinc-400">Collect and claim prizes & badges by playing games and completing quests.</p>
                 </div>
               </NeuCard>
             </div>
@@ -306,10 +243,7 @@ async function handleClaim() {
                   <FaGamepad className="mr-2 animate-pulse" /> Start Game
                 </Link>
               ) : (
-                <button
-                  disabled
-                  className="h-12 px-6 rounded-2xl font-semibold bg-zinc-800 text-zinc-400 border border-white/10 cursor-not-allowed"
-                >
+                <button disabled className="h-12 px-6 rounded-2xl font-semibold bg-zinc-800 text-zinc-400 border border-white/10 cursor-not-allowed">
                   Start Game
                 </button>
               )}
@@ -326,19 +260,9 @@ async function handleClaim() {
 
             <AnimatePresence mode="popLayout">
               {loadingBoard ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <RowSkeleton key={i} />
-                  ))}
-                </div>
+                <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <RowSkeleton key={i} />)}</div>
               ) : leaderboard.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="p-6 rounded-2xl bg-zinc-900/60 border border-white/10 text-sm text-zinc-400"
-                >
+                <motion.div key="empty" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="p-6 rounded-2xl bg-zinc-900/60 border border-white/10 text-sm text-zinc-400">
                   No entries yet. Connect your wallet and start playing—scores will appear here.
                 </motion.div>
               ) : (
@@ -357,20 +281,9 @@ async function handleClaim() {
                       )}
                     >
                       <div className="flex items-center gap-4">
-                          <span
-                            ref={(el: HTMLSpanElement | null): void => { iconRefs.current[i] = el; }}
-                            className="opacity-0 group-hover:opacity-100 transition-all duration-500"
-                            >
-                            {i === 0 ? (
-                            <FaTrophy className="text-yellow-400" />
-                            ) : i === 1 ? (
-                            <FaMedal className="text-gray-300" />
-                            ) : i === 2 ? (
-                            <FaMedal className="text-orange-400" />
-                            ) : (
-                              <FaWallet className="text-green-400" />
-                           )}
-                          </span>
+                        <span ref={(el: HTMLSpanElement | null) => { iconRefs.current[i] = el; }} className="opacity-0 group-hover:opacity-100 transition-all duration-500">
+                          {i === 0 ? <FaTrophy className="text-yellow-400" /> : i === 1 ? <FaMedal className="text-gray-300" /> : i === 2 ? <FaMedal className="text-orange-400" /> : <FaWallet className="text-green-400" />}
+                        </span>
                         <span className="font-mono text-zinc-200">{item.wallet}</span>
                       </div>
                       <span className="font-semibold text-lg text-zinc-100">{item.score}</span>
@@ -382,42 +295,40 @@ async function handleClaim() {
           </NeuCard>
         </section>
 
+        {/* Right */}
         <aside className="col-span-12 lg:col-span-4 space-y-8">
-          {/* Claim (landing) */}
-<NeuCard className="p-6 md:p-8">
-  <div className="flex items-center justify-between mb-4 md:mb-6">
-    <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3">
-      <FaWallet className="text-green-400" /> Claim
-    </h2>
-    <button
-      onClick={loadScores}
-      className="text-xs px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
-    >
-      Refresh
-    </button>
-  </div>
+          {/* Claim card */}
+          <NeuCard className="p-6 md:p-8">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3">
+                <FaWallet className="text-green-400" /> Claim
+              </h2>
+              <button onClick={loadScores} className="text-xs px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
+                Refresh
+              </button>
+            </div>
 
-  <div className="space-y-4">
-    {!address ? (
-      <p className="text-zinc-400">Connect wallet to see claimable amount.</p>
-    ) : myScore ? (
-      <div className="flex items-center justify-between">
-        <span className="text-zinc-400">Claimable</span>
-        <span className="font-mono text-white">{claimable}</span>
-      </div>
-    ) : (
-      <p className="text-zinc-400">No record found for this wallet.</p>
-    )}
+            <div className="space-y-4">
+              {!address ? (
+                <p className="text-zinc-400">Connect wallet to see claimable amount.</p>
+              ) : myRow ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Claimable</span>
+                  <span className="font-mono text-white">{claimable}</span>
+                </div>
+              ) : (
+                <p className="text-zinc-400">No record found for this wallet.</p>
+              )}
 
-    <button
-      onClick={handleClaim}
-      disabled={claimButtonDisabled}
-      className="w-full cursor-pointer text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl shadow-[inset_0_2px_0_rgba(255,255,255,.12)] hover:scale-[1.01] active:scale-[.99] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-    >
-      {isClaiming || isClaimConfirming ? "Claiming..." : "Claim Now"}
-    </button>
-  </div>
-</NeuCard>
+              <button
+                onClick={handleClaim}
+                disabled={claimButtonDisabled}
+                className="w-full cursor-pointer text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl shadow-[inset_0_2px_0_rgba(255,255,255,.12)] hover:scale-[1.01] active:scale-[.99] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isClaiming || isClaimConfirming ? "Claiming..." : "Claim Now"}
+              </button>
+            </div>
+          </NeuCard>
 
           <NeuCard className="p-6">
             <div className="flex items-center justify-between">
@@ -427,15 +338,11 @@ async function handleClaim() {
             <div className="mt-6 text-sm text-zinc-300 space-y-3">
               <div className="flex items-center justify-between py-2 border-b border-white/10">
                 <span>Wallet</span>
-                <span className="font-mono">
-                  {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Not connected"}
-                </span>
+                <span className="font-mono">{address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Not connected"}</span>
               </div>
               <div className="flex items-center justify-between py-2">
                 <span>Score</span>
-                <span className="font-mono">
-                  {typeof window !== "undefined" ? localStorage.getItem("score") ?? "--" : "--"}
-                </span>
+                <span className="font-mono">{typeof window !== "undefined" ? localStorage.getItem("score") ?? "--" : "--"}</span>
               </div>
             </div>
           </NeuCard>
@@ -445,16 +352,16 @@ async function handleClaim() {
               <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <p className="text-sm text-zinc-400">Pro tip</p>
             </div>
-            <p className="text-sm text-zinc-300">
-              Connect your wallet to unlock quests, claim rewards, and appear on the leaderboard.
-            </p>
+            <p className="text-sm text-zinc-300">Connect your wallet to unlock quests, claim rewards, and appear on the leaderboard.</p>
           </NeuCard>
         </aside>
       </main>
     </div>
-   );
+  );
 }
-    export default function Page() {
+
+/* ------------------------------ Page (CSR) ----------------------------- */
+export default function Page() {
   return (
     <Suspense fallback={null}>
       <HomeClient />
