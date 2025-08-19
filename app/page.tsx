@@ -111,6 +111,83 @@ function HomeClient() {
   const [leaderboard, setLeaderboard] = useState<Array<{ wallet: string; score: number }>>([]);
   const [loadingBoard, setLoadingBoard] = useState<boolean>(false);
 
+  // ---- Claim state ----
+const [scores, setScores] = useState<Array<{ id: string; [k: string]: any }>>([]);
+const [isClaiming, setIsClaiming] = useState(false);
+const [claimUpdatePerformed, setClaimUpdatePerformed] = useState(false);
+
+// Firestore se scores load/refresh
+const loadScores = async () => {
+  const snap = await getDocs(collection(db, "scores"));
+  setScores(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+};
+useEffect(() => { loadScores(); }, []);
+
+// wagmi tx + receipt
+const { data: claimHash, sendTransactionAsync } = useSendTransaction();
+const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } =
+  useWaitForTransactionReceipt({ hash: claimHash });
+
+// Current user score & helpers
+const myScore = useMemo(() => scores.find(s => s.wallet === address), [scores, address]);
+const claimable = myScore?.claim_value ?? 0;
+const claimButtonDisabled = !address || isClaiming || isClaimConfirming || !myScore || claimable <= 0;
+
+// Tx confirm hone par Firestore update
+useEffect(() => {
+  (async () => {
+    if (!isClaimConfirmed || claimUpdatePerformed || !address) return;
+    const userScoreObj = scores.find(s => s.wallet === address);
+    if (!userScoreObj) return;
+
+    try {
+      const ref = doc(db, "scores", userScoreObj.id);
+      await updateDoc(ref, { claim_done: true, claim_value: 0 });
+      setScores(prev => prev.map(s => s.id === userScoreObj.id ? { ...s, claim_done: true, claim_value: 0 } : s));
+      setClaimUpdatePerformed(true);
+      setIsClaiming(false);
+      alert("Reward claimed successfully!");
+    } catch (e) {
+      setIsClaiming(false);
+      alert("Error updating claim status. Please contact support.");
+    }
+  })();
+}, [isClaimConfirmed, claimHash, address, scores, claimUpdatePerformed]);
+
+// Claim button handler
+async function handleClaim() {
+  if (!address) { alert("Please connect your wallet first!"); return; }
+  if (isClaiming || isClaimConfirming) return;
+  if (!myScore) { alert("No record found for this wallet."); return; }
+
+  const remainingToClaim = myScore.claim_value || 0;
+  if (remainingToClaim <= 0) { alert("Nothing to claim."); return; }
+
+  const Claim_contractAddress = process.env.NEXT_PUBLIC_CLAIM_CONTRACT as `0x${string}` | undefined;
+  if (!Claim_contractAddress) { alert("Missing NEXT_PUBLIC_CLAIM_CONTRACT"); return; }
+
+  const pricePerToken = Number(process.env.NEXT_PUBLIC_PRICE_PER_TOKEN || "0");
+  const value = parseEther((remainingToClaim * pricePerToken).toString());
+
+  setClaimUpdatePerformed(false);
+  setIsClaiming(true);
+
+  try {
+    await sendTransactionAsync({ to: Claim_contractAddress, value });
+    // Receipt ka wait hook se hoga; Firestore update upar wale effect me
+  } catch (err: any) {
+    setIsClaiming(false);
+    const msg = typeof err?.message === "string" ? err.message : String(err);
+    if (msg.includes("user rejected") || msg.includes("User denied")) {
+      alert("Transaction was cancelled by user.");
+    } else if (msg === "Request timeout") {
+      alert("Request timed out. Please try again.");
+    } else {
+      alert("Error initiating claim. Please try again.");
+    }
+  }
+}
+
   useEffect(() => {
     const score = searchParams.get("score");
     if (score) {
