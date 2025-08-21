@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
 import { FaGamepad, FaArrowLeft } from "react-icons/fa";
+import { NeuCard, cn } from "./ui";
 
 /* -------------------------------------------------------------------------- */
 /*                               Types & Helpers                              */
@@ -13,23 +14,6 @@ interface IFrameProps {
   gameType: "game1" | "game2"; // which game to load
   onBack: () => void; // callback for back button
 }
-
-// Simple classNames combiner (avoids long string concatenations)
-const cn = (...classes: (string | false | undefined)[]) =>
-  classes.filter(Boolean).join(" ");
-
-// Base styles for soft / neumorphic card look
-const SOFT = {
-  card:
-    "rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 backdrop-blur-xl shadow-[inset_-6px_-6px_16px_rgba(255,255,255,0.05),inset_6px_6px_16px_rgba(0,0,0,0.7),12px_12px_24px_rgba(0,0,0,0.8)]",
-  hover: "transition-all duration-300 hover:scale-[1.01]",
-};
-
-// Small reusable card wrapper
-const NeuCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({
-  children,
-  className = "",
-}) => <div className={cn(SOFT.card, SOFT.hover, className)}>{children}</div>;
 
 /* -------------------------------------------------------------------------- */
 /*                                Main Component                              */
@@ -58,11 +42,11 @@ const IFrame: React.FC<IFrameProps> = ({ gameType, onBack }) => {
   const config = gameConfig[gameType];
 
   // When user clicks "Start Game", we pass wallet address to the iframe
-  const startGame = () => {
+  const startGame = useCallback(() => {
     if (!address) return;
     const url = `https://luxury-fudge-465d1d.netlify.app/?address=${address}`;
     setIframeSrc(url);
-  };
+  }, [address]);
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -100,12 +84,12 @@ const IFrame: React.FC<IFrameProps> = ({ gameType, onBack }) => {
         <div className="space-y-6">
           {/* ----------------------- IFrame Container ----------------------- */}
           <div className="relative">
-            <div className="rounded-2xl bg-zinc-900/70 border border-white/10 overflow-hidden w-[98%] mx-auto h-[600px]">
+            <div className="rounded-2xl bg-zinc-900/70 border border-white/10 overflow-hidden w-full h-[60vh] md:h-[85vh] max-h-[1000px]">
               {iframeSrc ? (
                 // If "Start Game" clicked → show iframe
                 <iframe
                   src={iframeSrc}
-                  className="w-full h-full rounded-2xl"
+                  className="w-full h-full"
                   title={config.title}
                   frameBorder="0"
                   allowFullScreen
