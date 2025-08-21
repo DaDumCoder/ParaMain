@@ -1,0 +1,249 @@
+"use client";
+
+import React, { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { FaArrowLeft, FaImage, FaCoins, FaFire, FaGem } from "react-icons/fa";
+import { TbHexagonLetterN } from "react-icons/tb";
+
+interface NFTProps {
+  onBack: () => void;
+}
+
+const NFT: React.FC<NFTProps> = ({ onBack }) => {
+  const [selectedTab, setSelectedTab] = useState<"collection" | "mint" | "marketplace">("collection");
+
+  // Dummy NFT data
+  const dummyNFTs = [
+    {
+      id: 1,
+      name: "Kazar Champion #001",
+      image: "https://via.placeholder.com/300x300/6366f1/ffffff?text=NFT+1",
+      rarity: "Legendary",
+      price: "0.5 ETH",
+    },
+    {
+      id: 2,
+      name: "Game Master #042",
+      image: "https://via.placeholder.com/300x300/ec4899/ffffff?text=NFT+2",
+      rarity: "Epic",
+      price: "0.3 ETH",
+    },
+    {
+      id: 3,
+      name: "Victory Badge #123",
+      image: "https://via.placeholder.com/300x300/10b981/ffffff?text=NFT+3",
+      rarity: "Rare",
+      price: "0.1 ETH",
+    },
+    {
+      id: 4,
+      name: "Warrior Spirit #567",
+      image: "https://via.placeholder.com/300x300/f59e0b/ffffff?text=NFT+4",
+      rarity: "Common",
+      price: "0.05 ETH",
+    },
+  ];
+
+  const getRarityColor = (rarity: string) => {
+    switch (rarity) {
+      case "Legendary": return "text-yellow-400 border-yellow-400/30 bg-yellow-400/10";
+      case "Epic": return "text-purple-400 border-purple-400/30 bg-purple-400/10";
+      case "Rare": return "text-blue-400 border-blue-400/30 bg-blue-400/10";
+      default: return "text-gray-400 border-gray-400/30 bg-gray-400/10";
+    }
+  };
+
+  const NeuCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 backdrop-blur-xl shadow-[inset_-6px_-6px_16px_rgba(255,255,255,0.05),inset_6px_6px_16px_rgba(0,0,0,0.7),12px_12px_24px_rgba(0,0,0,0.8)] transition-all duration-300 hover:scale-[1.01] ${className}`}>
+      {children}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="flex items-center gap-4"
+      >
+        <motion.button
+          onClick={onBack}
+          className="p-3 rounded-xl bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border border-white/10 hover:border-white/20 transition-all duration-300"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <FaArrowLeft className="text-zinc-300" />
+        </motion.button>
+        
+        <div className="flex items-center gap-3">
+          <TbHexagonLetterN className="text-3xl text-orange-400" />
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 bg-clip-text text-transparent">
+            NFT Collection
+          </h1>
+        </div>
+      </motion.div>
+
+      {/* Tab Navigation */}
+      <NeuCard className="p-6">
+        <div className="flex gap-4 mb-6">
+          {[
+            { key: "collection", label: "My Collection", icon: FaGem },
+            { key: "mint", label: "Mint NFTs", icon: FaFire },
+            { key: "marketplace", label: "Marketplace", icon: FaCoins },
+          ].map(({ key, label, icon: Icon }) => (
+            <motion.button
+              key={key}
+              onClick={() => setSelectedTab(key as any)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${
+                selectedTab === key
+                  ? "bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-400/30 text-orange-300"
+                  : "bg-zinc-800/50 border border-white/10 text-zinc-400 hover:text-zinc-200"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Icon className="text-sm" />
+              {label}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <AnimatePresence mode="wait">
+          {selectedTab === "collection" && (
+            <motion.div
+              key="collection"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {dummyNFTs.slice(0, 2).map((nft) => (
+                  <motion.div
+                    key={nft.id}
+                    className="rounded-2xl bg-zinc-800/50 border border-white/10 overflow-hidden hover:border-orange-400/30 transition-all duration-300"
+                    whileHover={{ scale: 1.02, y: -5 }}
+                  >
+                    <div className="aspect-square bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center">
+                      <FaImage className="text-4xl text-zinc-500" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-white mb-2">{nft.name}</h3>
+                      <div className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold border ${getRarityColor(nft.rarity)}`}>
+                        {nft.rarity}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              {dummyNFTs.length === 0 && (
+                <div className="text-center py-12">
+                  <FaImage className="text-6xl text-zinc-600 mx-auto mb-4" />
+                  <p className="text-zinc-400 text-lg">No NFTs in your collection yet</p>
+                  <p className="text-zinc-500 text-sm mt-2">Play games and complete quests to earn NFTs!</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {selectedTab === "mint" && (
+            <motion.div
+              key="mint"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-center py-12">
+                <FaFire className="text-6xl text-orange-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-white mb-4">Mint Exclusive NFTs</h3>
+                <p className="text-zinc-400 mb-6">
+                  Create unique digital collectibles by achieving milestones in games.
+                </p>
+                <motion.button
+                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-semibold rounded-xl hover:scale-105 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Coming Soon
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+
+          {selectedTab === "marketplace" && (
+            <motion.div
+              key="marketplace"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {dummyNFTs.map((nft) => (
+                  <motion.div
+                    key={nft.id}
+                    className="rounded-2xl bg-zinc-800/50 border border-white/10 overflow-hidden hover:border-green-400/30 transition-all duration-300"
+                    whileHover={{ scale: 1.02, y: -5 }}
+                  >
+                    <div className="aspect-square bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center">
+                      <FaImage className="text-4xl text-zinc-500" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-white mb-2">{nft.name}</h3>
+                      <div className="flex items-center justify-between">
+                        <div className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold border ${getRarityColor(nft.rarity)}`}>
+                          {nft.rarity}
+                        </div>
+                        <span className="text-green-400 font-bold">{nft.price}</span>
+                      </div>
+                      <motion.button
+                        className="w-full mt-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:scale-[1.02] transition-all duration-300"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        Buy Now
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </NeuCard>
+
+      {/* Stats Card */}
+      <NeuCard className="p-6">
+        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <FaGem className="text-orange-400" />
+          Collection Stats
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-400">2</div>
+            <div className="text-sm text-zinc-400">Owned</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-400">1.2</div>
+            <div className="text-sm text-zinc-400">Total ETH</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-400">5</div>
+            <div className="text-sm text-zinc-400">Achievements</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-400">3</div>
+            <div className="text-sm text-zinc-400">Rank</div>
+          </div>
+        </div>
+      </NeuCard>
+    </div>
+  );
+};
+
+export default NFT;
