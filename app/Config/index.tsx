@@ -1,96 +1,65 @@
-// import { cookieStorage, createStorage, http } from '@wagmi/core'
-// import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-// import { basecampTestnet } from '@reown/appkit/networks'
-// import { paraConnector } from "@getpara/wagmi-v2-integration";
-// import { para } from '../client/para';
-// import { OAuthMethod } from '@getpara/react-sdk';
-// // import { basecampTestnet } from "viem/chains";
-
-// // Get projectId from https://cloud.reown.com
-// export const projectId = "c70d056e9a9018d033c2195ba5aa5bf6"
-
-// if (!projectId) {
-//   throw new Error('Project ID is not defined')
-// }
-
-// export const networks = [ basecampTestnet]
-
-// //Set up the Wagmi Adapter (Config)
-// export const wagmiAdapter = new WagmiAdapter({
-//   storage: createStorage({
-//     storage: cookieStorage
-//   }),
-//   ssr: true,
-//   projectId,
-//   networks
-// })
-
-
-// export const config = wagmiAdapter.wagmiConfig
-
-
 "use client";
-import { http /*, fallback*/ } from "viem";  // RPC transport; fallback optional
-import { defineChain } from "viem";
+
+import { defineChain, http } from "viem";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import type { AppKitNetwork } from "@reown/appkit/networks";
 import { paraConnector } from "@getpara/wagmi-v2-integration";
 import { para } from "../lib/para/client";
-import { CreateConnectorFn } from "wagmi";
+import type { CreateConnectorFn } from "wagmi";
 import { QueryClient } from "@tanstack/react-query";
-import { mainnet, arbitrum, optimism, polygon, base, basecampTestnet } from "wagmi/chains";
-import type { AppKitNetwork } from "@reown/appkit/networks";
 
-export const APP_NAME = "Reown AppKit + Para Example";
-export const APP_DESCRIPTION =
-  "This example demonstrates how to integrate Para as a custom wagmi connector in Reown AppKit.";
-
-//chaindefine
+/** ---------- CAMP MAINNET (Basecamp) ---------- */
 export const campMainnet = defineChain({
-  id: 484,
+  id: 484, // ✅ official mainnet
   name: "Camp Mainnet",
   network: "camp-mainnet",
   nativeCurrency: { name: "Camp", symbol: "CAMP", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://rpc.camp.raas.gelato.cloud/"] },
-    public:  { http: ["https://rpc.camp.raas.gelato.cloud/"] },
+    default: {
+      http: ["https://rpc.camp.raas.gelato.cloud"],
+      webSocket: ["wss://ws.camp.raas.gelato.cloud"],
+    },
+    public: {
+      http: ["https://rpc.camp.raas.gelato.cloud"],
+      webSocket: ["wss://ws.camp.raas.gelato.cloud"],
+    },
   },
   blockExplorers: {
     default: { name: "Blockscout", url: "https://camp.cloud.blockscout.com/" },
   },
 } as const);
 
-//chaindefine
+/** Networks visible in AppKit modal */
 export const chains = [campMainnet] as const;
 
+/** WalletConnect Project ID (set in env for prod) */
 export const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
-
 if (!projectId) {
   throw new Error("NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set");
 }
 
+/** React Query client */
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-    },
-  },
+  defaultOptions: { queries: { staleTime: 60 * 1000 } },
 });
 
+/** Metadata (set your real domain here to avoid WC redirect warning) */
 const metadata = {
   name: "Reown AppKit Example",
   description: "Reown AppKit with Next.js and Wagmi",
-  url: "https://reown.com",
+  url: "https://para-main.vercel.app", // ← change if your deployed URL differs
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 };
 
+/** Para connector (wagmi v2) */
 const connector = paraConnector({
-  para: para,
+  para,
   chains: [...chains],
   appName: "Reown AppKit with Para",
   logo: "/para.svg",
   queryClient,
-  oAuthMethods: [ "GOOGLE", "TWITTER"],
+  oAuthMethods: ["GOOGLE", "TWITTER"],
   theme: {
     foregroundColor: "#2D3648",
     backgroundColor: "#FFFFFF",
@@ -112,24 +81,18 @@ const connector = paraConnector({
 
 const connectors: CreateConnectorFn[] = [connector as CreateConnectorFn];
 
+/** Wagmi adapter + RPC transports (locked to CAMP RPC) */
 export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   networks: [...chains] as [AppKitNetwork, ...AppKitNetwork[]],
   projectId,
   connectors,
-
-  // 👇 yahan RPC enforce karo
   transports: {
-    // Single RPC
-    [campMainnet.id]: http("https://rpc-campnetwork.xyz"),},
-
-    // (optional) agar 2 RPC se fallback banana ho to, upar import me fallback enable karo
-    // [campMainnet.id]: fallback([
-    //   http("https://rpc-campnetwork.xyz"),
-    //   http("https://rpc.basecamp.t.raas.gelato.cloud"),
-    // ]),
+    [campMainnet.id]: http(campMainnet.rpcUrls.default.http[0]),
+  },
 });
 
+/** AppKit init */
 export const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks: [...chains] as [AppKitNetwork, ...AppKitNetwork[]],
@@ -142,10 +105,7 @@ export const appKit = createAppKit({
     emailShowWallets: false,
   },
   themeMode: "light",
-  // enableEIP6963: false,
   enableInjected: true,
-  // enableWalletConnect: false,
   enableCoinbase: false,
   allowUnsupportedChain: false,
-  // allWallets: "HIDE",
 });
