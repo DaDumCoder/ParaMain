@@ -121,7 +121,7 @@ export const wagmiAdapter = new WagmiAdapter({
   // 👇 yahan RPC enforce karo
   transports: {
     // Single RPC
-    [campMainnet.id]: http("https://rpc-campnetwork.xyz"),
+    [campMainnet.id]: http("https://rpc-campnetwork.xyz"),},
 
     // (optional) agar 2 RPC se fallback banana ho to, upar import me fallback enable karo
     // [campMainnet.id]: fallback([
