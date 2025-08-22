@@ -47,7 +47,7 @@ export default function RetroGameMenu() {
 
         {/* Start Game Button */}
         <Link
-          href={`https://luxury-fudge-465d1d.netlify.app/?address=${address}`}
+          href={`https://musiccamp.netlify.app/?address=${address}`}
           target="_blank"
         >
           <button
