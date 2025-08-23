@@ -30,14 +30,12 @@ const IFrame: React.FC<IFrameProps> = ({ gameType, onBack }) => {
       description: "A fun experience powered by blockchain.",
       gradient: "from-pink-500 via-red-500 to-yellow-400",
       glowColor: "rgba(236,72,153,0.6)",
-      url: "https://luxury-fudge-465d1d.netlify.app",
     },
     game2: {
       title: "Game 2",
       description: "Another exciting adventure awaits.",
       gradient: "from-green-400 via-teal-400 to-cyan-400",
       glowColor: "rgba(34,197,94,0.6)",
-      url: "https://musiccamp.netlify.app",
     },
   };
 
@@ -46,9 +44,9 @@ const IFrame: React.FC<IFrameProps> = ({ gameType, onBack }) => {
   // When user clicks "Start Game", we pass wallet address to the iframe
   const startGame = useCallback(() => {
     if (!address) return;
-    const url = `${config.url}/?address=${address}`;
+    const url = `https://luxury-fudge-465d1d.netlify.app/?address=${address}`;
     setIframeSrc(url);
-  }, [address, config.url]);
+  }, [address]);
 
   return (
     <div className="space-y-6 md:space-y-8">
