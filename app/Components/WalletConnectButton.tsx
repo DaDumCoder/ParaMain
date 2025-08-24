@@ -11,12 +11,9 @@ function shortAddr(a?: string) {
 
 export default function ConnectButton() {
   const { address } = useAccount();
-  const label = useMemo(
-    () => (address ? shortAddr(address) : 'Connect Wallet'),
-    [address]
-  );
+  const label = useMemo(() => (address ? shortAddr(address) : 'Connect Wallet'), [address]);
 
-  // keep your existing persistence logic (unchanged)
+  // --- keep your existing persistence logic unchanged ---
   useEffect(() => {
     const saveWalletConnection = async () => {
       if (!address) return;
@@ -37,7 +34,7 @@ export default function ConnectButton() {
 
   return (
     <div className="relative inline-block">
-      {/* OUTER AURA */}
+      {/* Outer warm aura */}
       <div
         aria-hidden
         className="pointer-events-none absolute -inset-4 rounded-[28px] blur-2xl opacity-70 transition
@@ -46,7 +43,7 @@ export default function ConnectButton() {
                    before:bg-[radial-gradient(80%_120%_at_75%_100%,rgba(245,158,11,0.35),transparent_60%)]"
       />
 
-      {/* BORDER + GLASS PANEL */}
+      {/* Gradient border + glass panel */}
       <div
         className="relative rounded-[24px] p-[2px]
                    bg-[conic-gradient(at_20%_-10%,#fb923c,#f59e0b,#f97316,#fb923c)]
@@ -76,19 +73,27 @@ export default function ConnectButton() {
             className="pointer-events-none absolute -right-6 -bottom-6 h-16 w-20 bg-amber-300/40 blur-2xl rounded-full"
           />
 
-          {/* VISIBLE LABEL (our UI) */}
-          <div className="relative z-10 px-5 py-3 text-white text-sm font-semibold
-                          drop-shadow-[0_0_10px_rgba(251,189,35,0.85)]
-                          select-none text-center">
+          {/* Visible label (our glass UI) */}
+          <div
+            className="relative z-10 px-5 py-3 text-white text-sm font-semibold
+                       drop-shadow-[0_0_10px_rgba(251,189,35,0.85)] select-none text-center"
+            aria-hidden // prevent duplicate focus text; AppKit handles accessibility
+          >
             {label}
           </div>
 
-          {/* INVISIBLE APPKIT BUTTON OVERLAY (handles all clicks/keyboard) */}
-          <div className="absolute inset-0 z-20 grid place-items-center">
-            {/* Make AppKit's whole host transparent & full-size so our glass shows */}
+          {/* Invisible AppKit button overlay — handles all clicks/keyboard */}
+          <div className="absolute inset-0 z-20">
             <AppKitButton
-              // style applies to the host element that AppKit renders
-              style={{ opacity: 0, width: '100%', height: '100%' }}
+              // Make AppKit’s host fill this container and be visually hidden
+              style={{
+                opacity: 0,
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                // keep it focusable & clickable
+                cursor: 'pointer',
+              }}
             />
           </div>
         </div>
