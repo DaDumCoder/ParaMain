@@ -48,7 +48,7 @@ const queryClient = new QueryClient({
 const metadata = {
   name: "Reown AppKit Example",
   description: "Reown AppKit with Next.js and Wagmi",
-  url: "https://para-main.vercel.app", // ← change if your deployed URL differs
+  url: "https://x313vita.vercel.app", // ← change if your deployed URL differs
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 };
 
@@ -57,7 +57,7 @@ const connector = paraConnector({
   para,
   chains: [...chains],
   appName: "Reown AppKit with Para",
-  logo: "/para.png",
+  logo: "/para.svg",
   queryClient,
   oAuthMethods: ["GOOGLE", "TWITTER"],
   theme: {
