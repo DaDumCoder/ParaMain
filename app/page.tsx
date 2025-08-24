@@ -49,7 +49,7 @@ const BrandKazar: React.FC = () => {
     <div className="relative select-none">
       <div className="absolute -inset-1 rounded-2xl blur-xl bg-gradient-to-r from-fuchsia-500/30 via-indigo-500/30 to-cyan-500/30" />
       <motion.h1
-        className="relative z-10 font-black tracking-[0.25em] text-xl sm:text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-emerald-300 drop-shadow-[0_2px_6px_rgba(168,85,247,0.35)]"
+        className="relative z-10 font-black tracking-[0.25em] text-xl sm:text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-orange-200 via-amber-200 to-yellow-200 drop-shadow-[0_2px_6px_rgba(251,146,60,0.35)]"
         initial="hidden"
         animate="show"
         variants={{
@@ -88,7 +88,7 @@ const BrandKazar: React.FC = () => {
 const Navbar: React.FC = () => (
 <div className="sticky top-0 z-40 w-full">
   {/* Background Bar */}
-  <div className="h-16 w-full bg-gradient-to-r from-fuchsia-800/50 via-rose-800/50 to-indigo-800/50 backdrop-blur-xl border-b border-white/10 shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all duration-500" />
+  <div className="h-16 w-full bg-gradient-to-r from-orange-900/50 via-amber-900/50 to-red-900/50 backdrop-blur-xl border-b border-white/10 shadow-[0_0_25px_rgba(251,146,60,0.3)] transition-all duration-500"/>
 
   {/* Content Wrapper */}
   <div className="px-4 md:px-6 max-w-screen-xl mx-auto">
@@ -133,10 +133,11 @@ const navItems = [
     label: "Dashboard",
     icon: FaHome,
     hoverRotate: "hover:rotate-6",
-    activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(168,85,247,0.8)]",
-    activeGradient: "from-indigo-600/60 to-purple-700/60",
-    activeBorder: "border-indigo-400/30",
-    tooltipGradient: "from-indigo-500 via-fuchsia-500 to-emerald-400",
+    activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(251,146,60,0.8)]",
+    activeGradient: "from-orange-600/60 to-amber-700/60",
+    activeBorder: "border-orange-400/30",
+    tooltipGradient: "from-orange-500 via-amber-500 to-yellow-400",
+
   },
   {
     view: "game1" as View,
@@ -521,7 +522,7 @@ useEffect(() => {
                     transition={{ duration: 0.6 }}
                   >
                     Gateway to Web3 Games
-                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400">
+                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400">
                       on Camp Network
                     </span>
                   </motion.h1>
