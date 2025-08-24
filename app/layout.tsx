@@ -1,43 +1,10 @@
-// import type { Metadata } from 'next'
-// import './globals.css'
-// import { Pixelify_Sans } from 'next/font/google'
-
-
-
-// import { headers } from 'next/headers' // added
-// import ContextProvider from '../app/Context' // updated import path
-
-// const pixelifySans = Pixelify_Sans({ subsets: ['latin'] })
-
-
-// export const metadata: Metadata = {
-//   title: 'AppKit Example App',
-//   description: 'Powered by Reown'
-// }
-
-// export default async function RootLayout({
-//   children
-// }: Readonly<{
-//   children: React.ReactNode
-// }>) {
-
-//   const headersObj = await headers();
-//   const cookies = headersObj.get('cookie')
-
-//   return (
-//     <html lang="en">
-//       <body className={pixelifySans.className}>
-//         <ContextProvider cookies={cookies}>{children}</ContextProvider>
-//       </body>
-//     </html>
-//   )
-// }
-
+// app/layout.tsx
 import type { Metadata } from "next";
-import './globals.css'
+import "./globals.css";
 import "@getpara/react-sdk/styles.css";
 import { AppKitProvider } from "./Context/index";
 import { AppWrapper } from "./Components/AppWrapper";
+import { supercell } from "./fonts/supercell"; // ✅
 
 export const metadata: Metadata = {
   title: "Reown AppKit + Para",
@@ -46,12 +13,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body>
+    // expose the CSS variable globally
+    <html lang="en" className={supercell.variable}>
+      {/* make it the default app font (optional, remove if you only want it in some places) */}
+      <body className="font-supercell">
         <AppKitProvider>
           <AppWrapper>{children}</AppWrapper>
         </AppKitProvider>
