@@ -41,72 +41,44 @@ const claimAbi = [
 ] as const;
 
 /* ----------------------------- UI helpers ----------------------------- */
-
 /* ------------------------------ Brand/UI ------------------------------ */
 const BrandKazar: React.FC = () => {
-  const letters = useMemo(() => ["K", "A", "Z", "A", "R"], []);
   return (
     <div className="relative select-none">
-      <div className="absolute -inset-1 rounded-2xl blur-xl bg-gradient-to-r from-fuchsia-500/30 via-indigo-500/30 to-cyan-500/30" />
-      <motion.h1
-        className="relative z-10 font-black tracking-[0.25em] text-xl sm:text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-orange-200 via-amber-200 to-yellow-200 drop-shadow-[0_2px_6px_rgba(251,146,60,0.35)]"
-        initial="hidden"
-        animate="show"
-        variants={{
-          hidden: { opacity: 0 },
-          show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-        }}
-      >
-        {letters.map((ch, i) => (
-          <motion.span
-            key={i}
-            className="inline-block"
-            variants={{
-              hidden: { y: 20, opacity: 0 },
-              show: { y: 0, opacity: 1 },
-            }}
-            whileHover={{ y: -2, scale: 1.08 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
-            {ch}
-          </motion.span>
-        ))}
+      {/* warm glow behind the wordmark */}
+      <div className="absolute -inset-1 rounded-2xl blur-xl bg-gradient-to-r from-orange-500/30 via-amber-500/30 to-yellow-400/30" />
+      <h1 className="relative z-10 font-black tracking-[0.25em] text-xl sm:text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-orange-200 via-amber-200 to-yellow-200 drop-shadow-[0_2px_6px_rgba(251,146,60,0.35)]">
+        KAZAR
         <span className="relative ml-3 align-middle text-[10px] sm:text-xs font-semibold text-white/70">
-          <motion.span
-            className="inline-block"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-          >
-            on CAMP
-          </motion.span>
+          on CAMP
         </span>
-      </motion.h1>
+      </h1>
     </div>
   );
 };
 
 const Navbar: React.FC = () => (
-<div className="sticky top-0 z-40 w-full">
-  {/* Background Bar */}
-  <div className="h-16 w-full bg-gradient-to-r from-orange-900/50 via-amber-900/50 to-red-900/50 backdrop-blur-xl border-b border-white/10 shadow-[0_0_25px_rgba(251,146,60,0.3)] transition-all duration-500"/>
+  <div className="sticky top-0 z-40 w-full">
+    {/* Background Bar */}
+    <div className="h-16 w-full bg-gradient-to-r from-orange-900/50 via-amber-900/50 to-red-900/50 backdrop-blur-xl border-b border-white/10 shadow-[0_0_25px_rgba(251,146,60,0.3)] transition-all duration-500" />
 
-  {/* Content Wrapper */}
-  <div className="px-4 md:px-6 max-w-screen-xl mx-auto">
-    <div className="relative flex flex-wrap items-center justify-between -mt-10">
-      {/* Logo or Brand */}
-      <div className="flex-shrink-0">
-        <BrandKazar />
-      </div>
+    {/* Content Wrapper */}
+    <div className="px-4 md:px-6 max-w-screen-xl mx-auto">
+      <div className="relative flex flex-wrap items-center justify-between -mt-10">
+        {/* Logo or Brand */}
+        <div className="flex-shrink-0">
+          <BrandKazar />
+        </div>
 
-      {/* Buttons / Controls */}
-      <div className="flex items-center gap-2 sm:gap-3 mt-4 md:mt-0">
-        <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}>
-          <ConnectButton />
-        </motion.div>
+        {/* Buttons / Controls */}
+        <div className="flex items-center gap-2 sm:gap-3 mt-4 md:mt-0">
+          <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}>
+            <ConnectButton />
+          </motion.div>
+        </div>
       </div>
     </div>
   </div>
-</div>
 );
 
 const RowSkeleton: React.FC = () => (
