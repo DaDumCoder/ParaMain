@@ -98,7 +98,7 @@ const Navbar: React.FC = () => (
       </div>
 
       {/* inner bottom hairline */}
-      <div className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-white/10" />
+      <div className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-white/9" />
     </div>
   </div>
 );
