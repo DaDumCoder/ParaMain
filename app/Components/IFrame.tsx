@@ -42,11 +42,23 @@ const IFrame: React.FC<IFrameProps> = ({ gameType, onBack }) => {
   const config = gameConfig[gameType];
 
   // When user clicks "Start Game", we pass wallet address to the iframe
-  const startGame = useCallback(() => {
-    if (!address) return;
-    const url = `https://musiccamp.netlify.app/?address=${address}`;
-    setIframeSrc(url);
-  }, [address]);
+  // When user clicks "Start Game", we pass wallet address to the iframe
+const startGame = useCallback(() => {
+  if (!address) return;
+
+  // Game 1 stays on musiccamp, Game 2 opens holahu.com in the iframe
+  const base =
+    gameType === "game2"
+      ? "https://holahu.com/"
+      : "https://musiccamp.netlify.app/";
+
+  // keep address in query (safe if ignored by the page)
+  const separator = base.includes("?") ? "&" : "?";
+  const url = `${base}${separator}address=${address}`;
+
+  setIframeSrc(url);
+}, [address, gameType]);
+
 
   return (
     <div className="space-y-6 md:space-y-8">
