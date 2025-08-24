@@ -44,7 +44,7 @@ const IFrame: React.FC<IFrameProps> = ({ gameType, onBack }) => {
   // When user clicks "Start Game", we pass wallet address to the iframe
   const startGame = useCallback(() => {
     if (!address) return;
-    const url = `https://luxury-fudge-465d1d.netlify.app/?address=${address}`;
+    const url = `https://musiccamp.netlify.app/?address=${address}`;
     setIframeSrc(url);
   }, [address]);
 
