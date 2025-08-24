@@ -2,9 +2,10 @@ import localFont from "next/font/local";
 
 export const supercell = localFont({
   src: [
-    { path: "./supercell/SupercellMagic-Regular.woff2", weight: "400", style: "normal" },
-    { path: "./supercell/SupercellMagic-Bold.woff2",    weight: "700", style: "normal" },
+    // You only have Regular TTF in the repo right now
+    { path: "./supercell/Supercell-Magic Regular.ttf", weight: "400", style: "normal" },
+    // If you later add a bold TTF/WOFF2, add it here. For now we’ll fake bold in CSS.
   ],
-  variable: "--font-supercell",   // exposes a CSS var we can use in Tailwind
+  variable: "--font-supercell",
   display: "swap",
 });
