@@ -17,6 +17,7 @@ import ConnectButton from "./Components/WalletConnectButton";
 import IFrame from './Components/IFrame';
 import NFT from "./Components/NFT";
 import { NeuCard, cn } from "./Components/ui";
+import { useToast } from "./Components/Toast";
 
 // Firestore
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
@@ -314,6 +315,7 @@ const TwoColumnLayout = ({ left, right }: { left: React.ReactNode, right: React.
 /* ===================================================================== */
 
 function HomeClient() {
+  const { success, error, info } = useToast();
   const { address } = useAccount();
   useBalance({ address }); // optional: keeps wallet box fresh
   const searchParams = useSearchParams();
@@ -381,11 +383,11 @@ function HomeClient() {
           )
         );
         setIsClaiming(false);
-        alert("Reward claimed successfully!");
+        success("Reward claimed successfully!");
       } catch (e) {
         console.error("update after claim failed", e);
         setIsClaiming(false);
-        alert("Error updating claim status. Please contact support.");
+        error("Error updating claim status. Please contact support.");
       }
     })();
   }, [isClaimConfirmed, address, myRow]);
@@ -394,13 +396,13 @@ function HomeClient() {
   const handleClaim = useCallback(async () => {
     try {
       if (!address) {
-        alert("Connect your wallet first.");
+        info("Connect your wallet first.");
         return;
       }
 
       const amount = Math.floor(Number(claimable) || 0); // old flow: contract expects uint
       if (!amount || amount <= 0) {
-        alert("Nothing to claim.");
+        info("Nothing to claim.");
         return;
       }
 
@@ -417,7 +419,7 @@ function HomeClient() {
       setTxHash(hash);
     } catch (err: any) {
       console.error("Claim failed:", err);
-      alert(err?.shortMessage || err?.message || "Claim failed.");
+      error(err?.shortMessage || err?.message || "Claim failed.");
       setIsClaiming(false);
     }
   }, [address, claimable, writeContractAsync]);
