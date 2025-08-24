@@ -520,7 +520,7 @@ useEffect(() => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                   >
-                    All-in-one Super dApp
+                    Gateway to Web3 Games
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400">
                       on Camp Network
                     </span>
