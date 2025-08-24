@@ -59,49 +59,55 @@ const BrandKazar: React.FC = () => {
 
 const Navbar: React.FC = () => (
   <div className="sticky top-0 z-40 w-full">
-    {/* BAR SHELL */}
-    <div className="relative h-16 overflow-hidden">
-      {/* Warm gradient bar */}
-      <div className="absolute inset-0 bg-gradient-to-r from-orange-900/80 via-amber-900/70 to-red-900/80 backdrop-blur-xl" />
+    <div className="relative h-[70px] md:h-[74px] overflow-visible">
+      {/* Base warm gradient bar */}
+      <div className="absolute inset-0 bg-gradient-to-r from-orange-900/85 via-amber-900/75 to-red-900/85 backdrop-blur-xl border-b border-white/10" />
 
-      {/* Thin neon line on the top edge */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
+      {/* Top neon hairline */}
+      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
 
-      {/* Angled side wedges */}
-      <span className="absolute left-0 top-0 h-full w-24 bg-white/5 [clip-path:polygon(0%_0%,100%_0%,85%_100%,0%_100%)] border-r border-white/10" />
-      <span className="absolute right-0 top-0 h-full w-24 bg-white/5 [clip-path:polygon(15%_0%,100%_0%,100%_100%,0%_100%)] border-l border-white/10" />
+      {/* Angled side wedges (metal plates) */}
+      <span className="absolute left-0 top-0 h-full w-28 md:w-36 bg-white/6 [clip-path:polygon(0%_0%,100%_0%,82%_100%,0%_100%)] border-r border-white/10" />
+      <span className="absolute right-0 top-0 h-full w-28 md:w-36 bg-white/6 [clip-path:polygon(18%_0%,100%_0%,100%_100%,0%_100%)] border-l border-white/10" />
 
-      {/* Bottom glow */}
-      <div className="absolute -bottom-8 left-1/2 h-16 w-[60%] -translate-x-1/2 rounded-full bg-orange-500/25 blur-2xl" />
+      {/* Center keystone / notch */}
+      <span className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-40 md:w-52 bg-white/8 ring-1 ring-white/10
+                       [clip-path:polygon(0%_0%,100%_0%,86%_70%,50%_100%,14%_70%)]" />
 
-      {/* CONTENT */}
+      {/* Inner gloss strip */}
+      <div className="absolute inset-x-10 top-0 h-[60%] rounded-b-[36px] bg-white/10 blur-md opacity-50" />
+
+      {/* Bottom underglow */}
+      <div className="absolute -bottom-8 left-1/2 h-16 w-[62%] -translate-x-1/2 rounded-full bg-orange-500/25 blur-3xl" />
+
+      {/* CONTENT ROW */}
       <div className="relative z-10 mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 md:px-6">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          {/* thin vertical accent */}
           <div className="hidden md:block h-8 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent" />
           <BrandKazar />
         </div>
 
         {/* Right controls */}
         <div className="flex items-center gap-3">
-          {/* small CAMP capsule (glassy) */}
-          <div className="hidden md:grid place-items-center h-7 w-28 rounded-full bg-gradient-to-r from-amber-400/15 to-yellow-400/15 ring-1 ring-amber-400/25 text-[10px] font-semibold tracking-wider text-amber-200/80 backdrop-blur-sm">
+          {/* CAMP capsule */}
+          <div className="hidden md:grid place-items-center h-7 w-28 rounded-full bg-gradient-to-r from-amber-400/15 to-yellow-400/15 ring-1 ring-amber-400/25 text-[10px] font-semibold tracking-wider text-amber-200/85 backdrop-blur-sm">
             CAMP
           </div>
 
-          {/* Connect button (your existing glassy button) */}
+          {/* Connect (your existing glass button) */}
           <div className="transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]">
             <ConnectButton />
           </div>
         </div>
       </div>
 
-      {/* inner bottom hairline */}
-      <div className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-white/9" />
+      {/* Inner bottom hairline */}
+      <div className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-white/10" />
     </div>
   </div>
 );
+
 
 
 const RowSkeleton: React.FC = () => (
