@@ -49,7 +49,7 @@ const startGame = useCallback(() => {
   // Game 1 stays on musiccamp, Game 2 opens holahu.com in the iframe
   const base =
     gameType === "game2"
-      ? "https://holahu.com/"
+      ? "https://luxury-fudge-465d1d.netlify.app/"
       : "https://musiccamp.netlify.app/";
 
   // keep address in query (safe if ignored by the page)
