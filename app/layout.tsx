@@ -7,18 +7,18 @@ import { AppWrapper } from "./Components/AppWrapper";
 import { supercell } from "./fonts/supercell"; // ✅
 
 export const metadata: Metadata = {
-  title: "Reown AppKit + Para",
-  description: "Reown AppKit integration with Para wallet connector",
+  title: "KAZAR Games",
+  description: "Play and Roll",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // expose the CSS variable globally
+    // expose CSS var globally (good for Tailwind v4 @theme inline or future use)
     <html lang="en" className={supercell.variable}>
-      {/* make it the default app font (optional, remove if you only want it in some places) */}
-      <body className="font-supercell">
+      {/* make Supercell the actual font on the page */}
+      <body className={supercell.className}>
         <AppKitProvider>
           <AppWrapper>{children}</AppWrapper>
         </AppKitProvider>
