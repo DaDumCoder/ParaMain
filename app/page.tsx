@@ -20,7 +20,7 @@ import { NeuCard, cn } from "./Components/ui";
 import { useToast } from "./Components/Toast";
 
 // Firestore
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 // --- Claim contract config (same as old page) ---
@@ -356,41 +356,68 @@ function HomeClient() {
     () => scores.find((s) => s.wallet?.toLowerCase() === address?.toLowerCase()),
     [scores, address]
   );
+  const claimDone = !!myRow?.claim_done;
   const claimable = myRow?.claim_value ?? 0;
 
   // tx hooks (write -> wait receipt)
   const { writeContractAsync } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  // run-once guards per transaction
+const receiptHandledFor = useRef<`0x${string}` | null>(null);
+const pendingRowIdRef = useRef<string | null>(null);
+const pendingAmountRef = useRef<number>(0);
+
   const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } =
     useWaitForTransactionReceipt({ hash: txHash });
 
   const [isClaiming, setIsClaiming] = useState(false);
   const claimButtonDisabled =
-    !address || !myRow || claimable <= 0 || isClaiming || isClaimConfirming;
+  !address || !myRow || claimable <= 0 || claimDone || isClaiming || isClaimConfirming;
 
   // receipt -> mark claimed in Firestore
-  useEffect(() => {
-    (async () => {
-      if (!isClaimConfirmed || !address || !myRow) return;
-      try {
-        await updateDoc(doc(db, "scores", myRow.id), {
+useEffect(() => {
+  if (!isClaimConfirmed || !txHash) return;
+
+  // already handled this tx? bail
+  if (receiptHandledFor.current === txHash) return;
+  receiptHandledFor.current = txHash;
+
+  const rowId = pendingRowIdRef.current || myRow?.id || null;
+  const amount = pendingAmountRef.current || 0;
+
+  (async () => {
+    try {
+      if (rowId) {
+        await updateDoc(doc(db, "scores", rowId), {
+          // mark this accrual as claimed (backend will flip to false/add value on new points)
           claim_done: true,
           claim_value: 0,
+          last_claim_tx: txHash,
+          last_claim_amount: amount,
+          last_claim_at: serverTimestamp(),
         });
+
         setScores((prev) =>
           prev.map((r) =>
-            r.id === myRow.id ? { ...r, claim_done: true, claim_value: 0 } : r
+            r.id === rowId ? { ...r, claim_done: true, claim_value: 0 } : r
           )
         );
-        setIsClaiming(false);
-        success("Reward claimed successfully!");
-      } catch (e) {
-        console.error("update after claim failed", e);
-        setIsClaiming(false);
-        error("Error updating claim status. Please contact support.");
       }
-    })();
-  }, [isClaimConfirmed, address, myRow]);
+      success("Reward claimed successfully!");
+    } catch (e) {
+      console.error("update after claim failed", e);
+      error("Claim confirmed, but failed to record metadata.");
+    } finally {
+      setIsClaiming(false);
+      // reset so refresh/route changes don't re-trigger this effect
+      setTxHash(undefined);
+      pendingRowIdRef.current = null;
+      pendingAmountRef.current = 0;
+    }
+  })();
+  // NOTE: sirf receipt state + txHash pe depend kare
+}, [isClaimConfirmed, txHash]);
+
 
   // Claim via contract method (no value, only gas)
   const handleClaim = useCallback(async () => {
@@ -407,6 +434,10 @@ function HomeClient() {
       }
 
       setIsClaiming(true);
+      // remember which doc & how much for THIS claim
+      pendingRowIdRef.current = myRow?.id || null;
+      pendingAmountRef.current = amount;
+
 
       const hash = await writeContractAsync({
         address: CLAIM_CONTRACT,
@@ -422,7 +453,7 @@ function HomeClient() {
       error(err?.shortMessage || err?.message || "Claim failed.");
       setIsClaiming(false);
     }
-  }, [address, claimable, writeContractAsync]);
+  }, [address, claimable, writeContractAsync, myRow?.id]);
 
   // pick score from URL once (game returns ?score=...)
   useEffect(() => {
