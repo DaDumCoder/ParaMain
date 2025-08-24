@@ -77,7 +77,7 @@ const BrandKazar: React.FC = () => {
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
           >
-            on CAMP Network
+            on CAMP
           </motion.span>
         </span>
       </motion.h1>
