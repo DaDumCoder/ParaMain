@@ -59,32 +59,51 @@ const BrandKazar: React.FC = () => {
 
 const Navbar: React.FC = () => (
   <div className="sticky top-0 z-40 w-full">
-    <div className="relative h-[70px] md:h-[74px] overflow-visible">
-      {/* Base warm gradient bar */}
-      <div className="absolute inset-0 bg-gradient-to-r from-orange-900/85 via-amber-900/75 to-red-900/85 backdrop-blur-xl border-b border-white/10" />
+    <div className="relative h-[72px]">
+      {/* 1) Single shaped panel (no white edges) */}
+      <div
+        className={`
+          absolute inset-0
+          bg-gradient-to-r from-orange-900/90 via-amber-900/80 to-red-900/90
+          backdrop-blur-xl
+          [clip-path:polygon(0%_0%,100%_0%,100%_78%,92%_100%,8%_100%,0%_78%)]
+        `}
+      />
 
-      {/* Top neon hairline */}
-      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
+      {/* 2) gold outline stroke */}
+      <div
+        className={`
+          absolute inset-x-0 top-[2px] h-[68px]
+          pointer-events-none
+          [clip-path:polygon(0%_0%,100%_0%,100%_78%,92%_100%,8%_100%,0%_78%)]
+          ring-1 ring-amber-300/35
+        `}
+      />
 
-      {/* Angled side wedges (metal plates) */}
-      <span className="absolute left-0 top-0 h-full w-28 md:w-36 bg-white/6 [clip-path:polygon(0%_0%,100%_0%,82%_100%,0%_100%)] border-r border-white/10" />
-      <span className="absolute right-0 top-0 h-full w-28 md:w-36 bg-white/6 [clip-path:polygon(18%_0%,100%_0%,100%_100%,0%_100%)] border-l border-white/10" />
+      {/* 3) top neon hairline */}
+      <div className="absolute top-0 inset-x-[6px] h-[2px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
 
-      {/* Center keystone / notch */}
-      <span className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-40 md:w-52 bg-white/8 ring-1 ring-white/10
-                       [clip-path:polygon(0%_0%,100%_0%,86%_70%,50%_100%,14%_70%)]" />
+      {/* 4) center keystone / notch */}
+      <div
+        className={`
+          absolute top-0 left-1/2 -translate-x-1/2
+          h-full w-40 md:w-56
+          bg-white/6
+          ring-1 ring-white/10
+          [clip-path:polygon(0%_0%,100%_0%,85%_70%,50%_100%,15%_70%)]
+        `}
+      />
 
-      {/* Inner gloss strip */}
-      <div className="absolute inset-x-10 top-0 h-[60%] rounded-b-[36px] bg-white/10 blur-md opacity-50" />
+      {/* 5) subtle inner gloss */}
+      <div className="absolute inset-x-24 top-0 h-[58%] rounded-b-[36px] bg-white/10 blur-md opacity-50" />
 
-      {/* Bottom underglow */}
+      {/* 6) bottom underglow */}
       <div className="absolute -bottom-8 left-1/2 h-16 w-[62%] -translate-x-1/2 rounded-full bg-orange-500/25 blur-3xl" />
 
-      {/* CONTENT ROW */}
+      {/* CONTENT */}
       <div className="relative z-10 mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 md:px-6">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="hidden md:block h-8 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent" />
           <BrandKazar />
         </div>
 
@@ -95,18 +114,16 @@ const Navbar: React.FC = () => (
             CAMP
           </div>
 
-          {/* Connect (your existing glass button) */}
+          {/* Connect button (your existing) */}
           <div className="transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]">
             <ConnectButton />
           </div>
         </div>
       </div>
-
-      {/* Inner bottom hairline */}
-      <div className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-white/10" />
     </div>
   </div>
 );
+
 
 
 
