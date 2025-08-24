@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { TbHexagonLetterN } from 'react-icons/tb'
 import { FaTrophy, FaWallet, FaMedal, FaGamepad, FaHome } from "react-icons/fa";
+import { GiMusicalNotes, GiBlackHoleBolas } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import ConnectButton from "./Components/WalletConnectButton";
@@ -148,7 +149,7 @@ type View = "dashboard" | "game1" | "game2" | "nft";
 const navItems = [
   {
     view: "dashboard" as View,
-    label: "Dashboard",
+    label: "",
     icon: FaHome,
     hoverRotate: "hover:rotate-6",
     activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(251,146,60,0.8)]",
@@ -159,8 +160,8 @@ const navItems = [
   },
   {
     view: "game1" as View,
-    label: "CAMP Tunes",
-    icon: FaGamepad,
+    label: "Tune",
+    icon: GiMusicalNotes,
     hoverRotate: "hover:-rotate-6",
     activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(236,72,153,0.8)]",
     activeGradient: "from-pink-600/60 to-red-700/60",
@@ -169,8 +170,8 @@ const navItems = [
   },
   {
     view: "game2" as View,
-    label: "AttackURP",
-    icon: FaGamepad,
+    label: "URP",
+    icon: GiBlackHoleBolas,
     hoverRotate: "hover:rotate-5",
     activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(34,197,94,0.8)]",
     activeGradient: "from-green-600/60 to-teal-700/60",
