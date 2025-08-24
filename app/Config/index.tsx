@@ -57,7 +57,7 @@ const connector = paraConnector({
   para,
   chains: [...chains],
   appName: "Reown AppKit with Para",
-  logo: "/para.svg",
+  logo: "/para.png",
   queryClient,
   oAuthMethods: ["GOOGLE", "TWITTER"],
   theme: {
