@@ -91,7 +91,7 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
           {[
             { key: "collection", label: "My Collection", icon: FaGem },
             { key: "mint", label: "Mint NFTs", icon: FaFire },
-            { key: "marketplace", label: "Marketplace", icon: FaCoins },
+            { key: "marketplace", label: "XBadges", icon: FaCoins },
           ].map(({ key, label, icon: Icon }) => (
             <motion.button
               key={key}
