@@ -77,7 +77,7 @@ const BrandKazar: React.FC = () => {
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
           >
-            super dApp
+            gmaes
           </motion.span>
         </span>
       </motion.h1>
@@ -140,7 +140,7 @@ const navItems = [
   },
   {
     view: "game1" as View,
-    label: "Game 1",
+    label: "AttackURP",
     icon: FaGamepad,
     hoverRotate: "hover:-rotate-6",
     activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(236,72,153,0.8)]",
@@ -150,7 +150,7 @@ const navItems = [
   },
   {
     view: "game2" as View,
-    label: "Game 2",
+    label: "CAMP Tunes",
     icon: FaGamepad,
     hoverRotate: "hover:rotate-5",
     activeGlow: "shadow-[inset_-2px_-2px_8px_rgba(255,255,255,0.1),inset_2px_2px_8px_rgba(0,0,0,0.3),0_0_25px_rgba(34,197,94,0.8)]",
