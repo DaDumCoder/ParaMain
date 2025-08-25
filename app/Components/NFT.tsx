@@ -66,7 +66,7 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
       <NeuCard className="p-6">
         <div className="flex gap-4 mb-6">
           {[
-            { key: "collection", label: "My Collection", icon: FaGem },
+            { key: "collection", label: "Common", icon: FaGem },
             { key: "mint",        label: "Mint NFTs",     icon: FaFire },
             { key: "marketplace", label: "XBadges",       icon: FaCoins },
           ].map(({ key, label, icon: Icon }) => (
