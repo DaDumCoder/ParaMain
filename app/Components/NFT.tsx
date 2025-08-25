@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaArrowLeft, FaImage, FaCoins, FaFire, FaGem } from "react-icons/fa";
 import { TbHexagonLetterN } from "react-icons/tb";
@@ -12,44 +13,20 @@ interface NFTProps {
 const NFT: React.FC<NFTProps> = ({ onBack }) => {
   const [selectedTab, setSelectedTab] = useState<"collection" | "mint" | "marketplace">("collection");
 
-  // Dummy NFT data
+  // 👉 Use files from /public/nft (e.g. /public/nft/001.png)
   const dummyNFTs = [
-    {
-      id: 1,
-      name: "Kazar Champion #001",
-      image: "https://via.placeholder.com/300x300/6366f1/ffffff?text=NFT+1",
-      rarity: "Legendary",
-      price: "0.5 ETH",
-    },
-    {
-      id: 2,
-      name: "Game Master #042",
-      image: "https://via.placeholder.com/300x300/ec4899/ffffff?text=NFT+2",
-      rarity: "Epic",
-      price: "0.3 ETH",
-    },
-    {
-      id: 3,
-      name: "Victory Badge #123",
-      image: "https://via.placeholder.com/300x300/10b981/ffffff?text=NFT+3",
-      rarity: "Rare",
-      price: "0.1 ETH",
-    },
-    {
-      id: 4,
-      name: "Warrior Spirit #567",
-      image: "https://via.placeholder.com/300x300/f59e0b/ffffff?text=NFT+4",
-      rarity: "Common",
-      price: "0.05 ETH",
-    },
+    { id: 1, name: "Kazar Champion #001", image: "/nft/001.png", rarity: "Legendary", price: "0.5 ETH" },
+    { id: 2, name: "Game Master #042",   image: "/nft/002.png", rarity: "Epic",      price: "0.3 ETH" },
+    { id: 3, name: "Victory Badge #123",  image: "/nft/003.png", rarity: "Rare",      price: "0.1 ETH" },
+    { id: 4, name: "Warrior Spirit #567", image: "/nft/004.png", rarity: "Common",    price: "0.05 ETH" },
   ];
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
       case "Legendary": return "text-yellow-400 border-yellow-400/30 bg-yellow-400/10";
-      case "Epic": return "text-purple-400 border-purple-400/30 bg-purple-400/10";
-      case "Rare": return "text-blue-400 border-blue-400/30 bg-blue-400/10";
-      default: return "text-gray-400 border-gray-400/30 bg-gray-400/10";
+      case "Epic":      return "text-purple-400 border-purple-400/30 bg-purple-400/10";
+      case "Rare":      return "text-blue-400 border-blue-400/30 bg-blue-400/10";
+      default:          return "text-gray-400 border-gray-400/30 bg-gray-400/10";
     }
   };
 
@@ -76,7 +53,7 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
         >
           <FaArrowLeft className="text-zinc-300" />
         </motion.button>
-        
+
         <div className="flex items-center gap-3">
           <TbHexagonLetterN className="text-3xl text-orange-400" />
           <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 bg-clip-text text-transparent">
@@ -85,13 +62,13 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
         </div>
       </motion.div>
 
-      {/* Tab Navigation */}
+      {/* Tabs */}
       <NeuCard className="p-6">
         <div className="flex gap-4 mb-6">
           {[
             { key: "collection", label: "My Collection", icon: FaGem },
-            { key: "mint", label: "Mint NFTs", icon: FaFire },
-            { key: "marketplace", label: "XBadges", icon: FaCoins },
+            { key: "mint",        label: "Mint NFTs",     icon: FaFire },
+            { key: "marketplace", label: "XBadges",       icon: FaCoins },
           ].map(({ key, label, icon: Icon }) => (
             <motion.button
               key={key}
@@ -110,7 +87,7 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
           ))}
         </div>
 
-        {/* Tab Content */}
+        {/* Content */}
         <AnimatePresence mode="wait">
           {selectedTab === "collection" && (
             <motion.div
@@ -127,9 +104,19 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
                     className="rounded-2xl bg-zinc-800/50 border border-white/10 overflow-hidden hover:border-orange-400/30 transition-all duration-300"
                     whileHover={{ scale: 1.02, y: -5 }}
                   >
-                    <div className="aspect-square bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center">
-                      <FaImage className="text-4xl text-zinc-500" />
+                    {/* Image */}
+                    <div className="relative aspect-square bg-zinc-900/40">
+                      <Image
+                        src={nft.image}
+                        alt={nft.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                        priority
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
                     </div>
+
                     <div className="p-4">
                       <h3 className="font-bold text-lg text-white mb-2">{nft.name}</h3>
                       <div className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold border ${getRarityColor(nft.rarity)}`}>
@@ -139,7 +126,7 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
                   </motion.div>
                 ))}
               </div>
-              
+
               {dummyNFTs.length === 0 && (
                 <div className="text-center py-12">
                   <FaImage className="text-6xl text-zinc-600 mx-auto mb-4" />
@@ -190,9 +177,18 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
                     className="rounded-2xl bg-zinc-800/50 border border-white/10 overflow-hidden hover:border-green-400/30 transition-all duration-300"
                     whileHover={{ scale: 1.02, y: -5 }}
                   >
-                    <div className="aspect-square bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center">
-                      <FaImage className="text-4xl text-zinc-500" />
+                    {/* Image */}
+                    <div className="relative aspect-square bg-zinc-900/40">
+                      <Image
+                        src={nft.image}
+                        alt={nft.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
                     </div>
+
                     <div className="p-4">
                       <h3 className="font-bold text-lg text-white mb-2">{nft.name}</h3>
                       <div className="flex items-center justify-between">
@@ -217,7 +213,7 @@ const NFT: React.FC<NFTProps> = ({ onBack }) => {
         </AnimatePresence>
       </NeuCard>
 
-      {/* Stats Card */}
+      {/* Stats */}
       <NeuCard className="p-6">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <FaGem className="text-orange-400" />
