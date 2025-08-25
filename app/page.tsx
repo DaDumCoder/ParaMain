@@ -516,7 +516,14 @@ useEffect(() => {
       case 'game2':
         return (
           <TwoColumnLayout
-            left={<IFrame gameType={currentView} onBack={() => setCurrentView("dashboard")} />}
+            left={
+                  <IFrame
+                  key={currentView}  // ⬅️ forces fresh iframe when switching games
+                  gameType={currentView}
+                  onBack={() => setCurrentView("dashboard")}
+                  />
+                 }
+
             right={<><ClaimWidget {...claimProps} /><ProTipWidget /></>}
           />
         );
